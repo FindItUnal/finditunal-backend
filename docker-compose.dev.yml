@@ -27,6 +27,8 @@ services:
       - PORT=3000
       - CHOKIDAR_USEPOLLING=true
       - CHOKIDAR_INTERVAL=1000
+      - NODE_ENV=development
+      - FORCE_COLOR=1
     volumes:
       - ./:/app
       - /app/node_modules
@@ -36,6 +38,8 @@ services:
       db:
         condition: service_healthy
     restart: unless-stopped
+    stdin_open: true
+    tty: true
     deploy:
       resources:
         limits:
