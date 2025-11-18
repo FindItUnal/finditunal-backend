@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { ZodSchema, ZodError } from 'zod';
+import { ZodSchema } from 'zod';
 import { ValidationError, formatZodError } from '../utils/errors';
 
 // Middleware para validar datos con Zod

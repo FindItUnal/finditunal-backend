@@ -4,6 +4,9 @@ import { sendError } from '../utils/responseHandler';
 
 // Middleware para manejo centralizado de errores
 export const errorHandler = (err: Error | AppError, req: Request, res: Response, next: NextFunction): void => {
+  // Mark params as used to satisfy TS noUnusedParameters
+  void req;
+  void next;
   // Si es un error de Zod, formatearlo
   if (err.name === 'ZodError') {
     const formattedErrors = formatZodError(err);

@@ -2,44 +2,46 @@ import { Request, Response, NextFunction } from 'express';
 import { AuthService } from '../services/AuthService';
 import { sendSuccess } from '../utils/responseHandler';
 import { AppError } from '../utils/errors';
+import { APP_CONFIG } from '../config';
 
 export class AuthController {
   constructor(private authService: AuthService) {}
 
-  // Registrar un nuevo usuario
-  register = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    try {
-      await this.authService.register(req.body);
-      sendSuccess(res, { message: 'Usuario registrado exitosamente' }, 201);
-    } catch (error) {
-      next(error);
-    }
+  // Redirige a Google OAuth
+  googleAuth = async (_req: Request, res: Response): Promise<void> => {
+    const url = this.authService.getGoogleAuthUrl();
+    res.redirect(url);
   };
 
-  // Iniciar sesión
-  login = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  // Callback de Google OAuth
+  googleCallback = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const { email, password } = req.body;
-      const { tokens, user } = await this.authService.login(email, password);
+      const code = typeof req.query.code === 'string' ? req.query.code : undefined;
+      if (!code) {
+        throw new AppError(400, 'Código de autorización no proporcionado');
+      }
 
-      // Configurar cookies
+      const { tokens } = await this.authService.loginWithGoogle(code);
+
       res.cookie('accessToken', tokens.accessToken, {
         httpOnly: true,
-        secure: true, // Necesario para sameSite: 'none'
-        maxAge: 10 * 60 * 1000, // 10 minutos
+        secure: true,
+        maxAge: 10 * 60 * 1000,
         sameSite: 'none',
         path: '/',
       });
 
       res.cookie('refreshToken', tokens.refreshToken, {
         httpOnly: true,
-        secure: true, // Necesario para sameSite: 'none'
-        maxAge: 30 * 60 * 1000, // 30 minutos
+        secure: true,
+        maxAge: 30 * 60 * 1000,
         sameSite: 'none',
         path: '/',
       });
 
-      sendSuccess(res, { message: 'Inicio de sesión exitoso', user });
+      // Redirigir al frontend tras login
+      const redirectUrl = `${APP_CONFIG.FRONTEND_URL}`;
+      res.redirect(redirectUrl);
     } catch (error) {
       next(error);
     }

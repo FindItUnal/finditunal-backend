@@ -1,9 +1,9 @@
-import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { JWT_CONFIG } from '../config';
+import { ACCESS_RULES, GOOGLE_OAUTH_CONFIG, JWT_CONFIG } from '../config';
 import UserModel from '../models/UserModel';
-import { RegisterInput, UpdateUserInput } from '../schemas/authSchemas';
+import { UpdateUserInput } from '../schemas/authSchemas';
 import { UnauthorizedError, NotFoundError, ConflictError } from '../utils/errors';
+import { OAuth2Client } from 'google-auth-library';
 
 export interface TokenPair {
   accessToken: string;
@@ -21,51 +21,93 @@ export interface UserInfo {
 export class AuthService {
   constructor(private userModel: UserModel) {}
 
-  // Registrar un nuevo usuario
-  async register(input: RegisterInput): Promise<void> {
-    // Verificar si el usuario ya existe
-    const existingUser = await this.userModel.getUserByEmail(input.email);
-    if (existingUser) {
-      throw new ConflictError('El usuario ya existe');
-    }
-
-    // Hash de la contraseña
-    const password_hash = await bcrypt.hash(input.password, 10);
-
-    // Crear el usuario
-    await this.userModel.createUser({
-      ...input,
-      password: password_hash,
+  // Construir URL de autorización de Google
+  getGoogleAuthUrl(state?: string): string {
+    const params = new URLSearchParams({
+      client_id: GOOGLE_OAUTH_CONFIG.CLIENT_ID,
+      redirect_uri: GOOGLE_OAUTH_CONFIG.REDIRECT_URI,
+      response_type: 'code',
+      scope: GOOGLE_OAUTH_CONFIG.SCOPES.join(' '),
+      access_type: 'online',
+      include_granted_scopes: 'true',
+      prompt: 'consent',
     });
+    if (state) params.set('state', state);
+    return `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
   }
 
-  // Iniciar sesión
-  async login(email: string, password: string): Promise<{ tokens: TokenPair; user: UserInfo }> {
-    // Buscar el usuario por email
-    const user = await this.userModel.getUserByEmail(email);
+  // Intercambiar el code por tokens y autenticar usuario
+  async loginWithGoogle(code: string): Promise<{ tokens: TokenPair; user: UserInfo }> {
+    if (!GOOGLE_OAUTH_CONFIG.CLIENT_ID || !GOOGLE_OAUTH_CONFIG.CLIENT_SECRET) {
+      throw new UnauthorizedError('Configuración de Google OAuth incompleta');
+    }
+
+    const client = new OAuth2Client(
+      GOOGLE_OAUTH_CONFIG.CLIENT_ID,
+      GOOGLE_OAUTH_CONFIG.CLIENT_SECRET,
+      GOOGLE_OAUTH_CONFIG.REDIRECT_URI,
+    );
+
+    const { tokens } = await client.getToken({ code, redirect_uri: GOOGLE_OAUTH_CONFIG.REDIRECT_URI });
+    if (!tokens.id_token) {
+      throw new UnauthorizedError('No se recibió id_token de Google');
+    }
+
+    const ticket = await client.verifyIdToken({
+      idToken: tokens.id_token,
+      audience: GOOGLE_OAUTH_CONFIG.CLIENT_ID,
+    });
+    const payload = ticket.getPayload();
+    if (!payload || !payload.email || !payload.sub) {
+      throw new UnauthorizedError('Token de Google inválido');
+    }
+
+    const email = payload.email;
+    const googleId = payload.sub;
+    const name = payload.name || email.split('@')[0];
+
+    // Reglas de acceso
+    const isAdmin = ACCESS_RULES.ADMIN_EMAIL && email.toLowerCase() === ACCESS_RULES.ADMIN_EMAIL.toLowerCase();
+    const isAllowedDomain = email.toLowerCase().endsWith(ACCESS_RULES.ALLOWED_DOMAIN);
+    if (!isAdmin && !isAllowedDomain) {
+      throw new UnauthorizedError('Dominio de correo no permitido');
+    }
+
+    // Buscar o crear usuario por google_id
+    let user = await this.userModel.getUserByGoogleId(googleId);
     if (!user) {
-      throw new UnauthorizedError('Credenciales inválidas');
+      // Si no existe, opcionalmente intentar por email (por si hay una cuenta previa huérfana)
+      const userByEmail = await this.userModel.getUserByEmail(email);
+      if (userByEmail) {
+        // No hay actualización del google_id prevista; para esquema limpio creamos uno nuevo si no hay
+        // vínculo. En producción, aquí se podría actualizar el registro existente.
+        user = userByEmail as any;
+      } else {
+        await this.userModel.createUserFromGoogle({
+          email,
+          google_id: googleId,
+          name,
+          role: isAdmin ? 'admin' : 'user',
+        });
+        user = (await this.userModel.getUserByGoogleId(googleId))!;
+      }
     }
 
-    // Verificar la contraseña
-    const isPasswordValid = await bcrypt.compare(password, user.password_hash);
-    if (!isPasswordValid) {
-      throw new UnauthorizedError('Credenciales inválidas');
+    if (!user) {
+      throw new UnauthorizedError('No se pudo crear o recuperar el usuario');
     }
 
-    // Generar tokens
-    const tokens = this.generateTokens(user.user_id, user.role);
+    const tokensPair = this.generateTokens(user.user_id, isAdmin ? 'admin' : user.role);
 
-    // Retornar información del usuario (sin datos sensibles)
     const userInfo: UserInfo = {
       user_id: user.user_id,
       email: user.email,
       name: user.name,
       phone_number: user.phone_number,
-      role: user.role,
+      role: isAdmin ? 'admin' : user.role,
     };
 
-    return { tokens, user: userInfo };
+    return { tokens: tokensPair, user: userInfo };
   }
 
   // Refrescar el access token
