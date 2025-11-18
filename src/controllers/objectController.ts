@@ -1,59 +1,49 @@
-import { Request, Response } from 'express';
-import ObjectModel from '../models/ObjectModel';
+import { Request, Response, NextFunction } from 'express';
+import { ObjectService } from '../services/ObjectService';
+import { sendSuccess } from '../utils/responseHandler';
 
 export class ObjectController {
-  private objectModel: ObjectModel;
-  constructor(objectModel: ObjectModel) {
-    this.objectModel = objectModel;
-  }
+  constructor(private objectService: ObjectService) {}
 
   // Obtener todos los objetos
-  getAllObjects = async (_req: Request, res: Response): Promise<void> => {
+  getAllObjects = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const objects = await this.objectModel.getAllObjects();
-      res.status(200).json(objects);
+      const objects = await this.objectService.getAllObjects();
+      sendSuccess(res, objects);
     } catch (error) {
-      console.error(error);
-      res.status(500).json({ message: 'Error en el servidor' });
+      next(error);
     }
   };
 
   // Obtener un objeto por su report_id
-  getObjectById = async (req: Request, res: Response): Promise<void> => {
+  getObjectById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const report_id = parseInt(req.params.report_id, 10);
-      const object = await this.objectModel.getObjectById(report_id);
+      const reportId = parseInt(req.params.report_id, 10);
+      const object = await this.objectService.getObjectById(reportId);
 
-      if (!object) {
-        res.status(404).json({ message: 'Objeto no encontrado' });
-        return;
-      }
-
-      res.status(200).json(object);
+      sendSuccess(res, object);
     } catch (error) {
-      console.error(error);
-      res.status(500).json({ message: 'Error en el servidor' });
+      next(error);
     }
   };
 
   // Buscar objetos por categoría, ubicación, rango de fechas y palabras clave
-  searchObjects = async (req: Request, res: Response): Promise<void> => {
+  searchObjects = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { category, location, startDate, endDate, keyword, status } = req.query;
 
-      const objects = await this.objectModel.searchObjects(
-        category as string,
-        location as string,
-        startDate as string,
-        endDate as string,
-        keyword as string,
-        status as 'perdido' | 'encontrado',
-      );
+      const objects = await this.objectService.searchObjects({
+        category: category as string,
+        location: location as string,
+        startDate: startDate as string,
+        endDate: endDate as string,
+        keyword: keyword as string,
+        status: status as 'perdido' | 'encontrado',
+      });
 
-      res.status(200).json(objects);
+      sendSuccess(res, objects);
     } catch (error) {
-      console.error(error);
-      res.status(500).json({ message: 'Error en el servidor' });
+      next(error);
     }
   };
 }

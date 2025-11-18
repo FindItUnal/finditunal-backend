@@ -19,6 +19,10 @@ export const reportSchema = z.object({
   contact_method: z.string().min(1, 'El método de contacto es requerido'),
 });
 
+// Exportar tipos inferidos
+export type CreateReportInput = z.infer<typeof reportSchema>;
+export type UpdateReportInput = z.infer<typeof reportSchema>;
+
 // Exportar funciones de validación
 export function validateCreateReport(input: unknown) {
   return reportSchema.safeParse(input);

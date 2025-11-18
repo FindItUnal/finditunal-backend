@@ -1,11 +1,13 @@
 import { Router } from 'express';
 import { ObjectController } from '../controllers/objectController';
+import { ObjectService } from '../services/ObjectService';
 import ObjectModel from '../models/ObjectModel';
 import { authenticate } from '../middlewares/authMiddleware';
 
 export const createObjectRouter = (objectModel: ObjectModel): Router => {
   const objectRouter = Router();
-  const objectController = new ObjectController(objectModel);
+  const objectService = new ObjectService(objectModel);
+  const objectController = new ObjectController(objectService);
 
   // Obtener todos los objetos
   objectRouter.get('/:user_id/objects', authenticate, objectController.getAllObjects);

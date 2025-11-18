@@ -1,16 +1,16 @@
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import path from 'path';
+import { NotFoundError } from '../utils/errors';
 
 export class ImageController {
-  sendImage = (req: Request, res: Response): void => {
+  sendImage = (req: Request, res: Response, next: NextFunction): void => {
     const filename = req.params.filename;
     const imagePath = path.join(__dirname, '..', 'uploads', filename);
 
     // Enviar el archivo al cliente
     res.sendFile(imagePath, (err) => {
       if (err) {
-        console.error('Error al enviar la imagen:', err);
-        res.status(404).json({ message: 'Imagen no encontrada' });
+        next(new NotFoundError('Imagen no encontrada'));
       }
     });
   };
