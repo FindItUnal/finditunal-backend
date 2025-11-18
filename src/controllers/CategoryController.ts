@@ -1,21 +1,17 @@
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import CategoryModel from '../models/CategoryModel';
+import { sendSuccess } from '../utils/responseHandler';
 
 export class CategoryController {
-  private categoryModel: CategoryModel;
-
-  constructor(categoryModel: CategoryModel) {
-    this.categoryModel = categoryModel;
-  }
+  constructor(private categoryModel: CategoryModel) {}
 
   // Obtener todas las categorías
-  getAllCategories = async (_req: Request, res: Response): Promise<void> => {
+  getAllCategories = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const categories = await this.categoryModel.getAllCategories();
-      res.status(200).json(categories);
+      sendSuccess(res, categories);
     } catch (error) {
-      console.error(error);
-      res.status(500).json({ message: 'Error en el servidor' });
+      next(error);
     }
   };
 }

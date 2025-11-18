@@ -1,6 +1,7 @@
 import express, { json } from 'express';
 import { Models } from './modelTypes';
 import { corsMiddleware } from './middlewares/corsMiddleware';
+import { errorHandler } from './middlewares/errorHandler';
 import { MySQLDatabase } from './database/mysql';
 import cookieParser from 'cookie-parser';
 import { createAuthRouter } from './routes/authRoutes';
@@ -36,9 +37,31 @@ export const createApp = async ({ models }: { models: Models }): Promise<express
 
     app.use('/user', createImageRouter());
 
+    // Middleware de manejo de errores (debe ir al final)
+    app.use(errorHandler);
+
     const PORT = process.env.PORT ?? 3000;
-    app.listen(PORT, () => {
+    const server = app.listen(PORT, () => {
       console.log(`server listening on port http://localhost:${PORT}`);
+    });
+
+    // Manejo de cierre graceful
+    process.on('SIGTERM', async () => {
+      console.log('SIGTERM recibido, cerrando servidor...');
+      server.close(async () => {
+        const db = await MySQLDatabase.getInstance();
+        await db.close();
+        process.exit(0);
+      });
+    });
+
+    process.on('SIGINT', async () => {
+      console.log('SIGINT recibido, cerrando servidor...');
+      server.close(async () => {
+        const db = await MySQLDatabase.getInstance();
+        await db.close();
+        process.exit(0);
+      });
     });
 
     return app;
