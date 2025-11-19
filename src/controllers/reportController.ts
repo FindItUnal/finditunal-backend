@@ -8,7 +8,7 @@ export class ReportController {
   // Crear un nuevo reporte
   createReport = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const userId = parseInt(req.params.user_id, 10);
+      const userId = req.params.user_id;
       const uploadedFile = req.file?.filename;
 
       await this.reportService.createReport(userId, req.body, uploadedFile);
@@ -22,7 +22,7 @@ export class ReportController {
   // Obtener todos los reportes de un usuario
   getUserReports = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const userId = parseInt(req.params.user_id, 10);
+      const userId = req.params.user_id;
       const reports = await this.reportService.getUserReports(userId);
 
       sendSuccess(res, reports);
@@ -34,7 +34,7 @@ export class ReportController {
   // Editar un reporte
   updateReport = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const userId = parseInt(req.params.user_id, 10);
+      const userId = req.params.user_id;
       const reportId = parseInt(req.params.report_id, 10);
 
       await this.reportService.updateReport(reportId, userId, req.body);
@@ -48,7 +48,7 @@ export class ReportController {
   // Eliminar un reporte
   deleteReport = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const userId = parseInt(req.params.user_id, 10);
+      const userId = req.params.user_id;
       const reportId = parseInt(req.params.report_id, 10);
 
       await this.reportService.deleteReport(reportId, userId);

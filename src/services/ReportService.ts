@@ -6,7 +6,7 @@ import { deleteImage } from '../middlewares/multerMiddleware';
 
 export interface ReportWithImage {
   report_id: number;
-  user_id: number;
+  user_id: string;
   category_id: number;
   location_id: number;
   title: string;
@@ -25,7 +25,7 @@ export class ReportService {
   ) {}
 
   // Crear un nuevo reporte
-  async createReport(userId: number, reportData: CreateReportInput, imageFilename?: string): Promise<number> {
+  async createReport(userId: string, reportData: CreateReportInput, imageFilename?: string): Promise<number> {
     try {
       const report = {
         ...reportData,
@@ -50,13 +50,13 @@ export class ReportService {
   }
 
   // Obtener todos los reportes de un usuario
-  async getUserReports(userId: number): Promise<ReportWithImage[]> {
+  async getUserReports(userId: string): Promise<ReportWithImage[]> {
     const reports = await this.reportModel.getReportsByUserId(userId);
     return reports as ReportWithImage[];
   }
 
   // Obtener un reporte por ID (verifica que pertenezca al usuario)
-  async getReportById(reportId: number, userId: number): Promise<ReportWithImage> {
+  async getReportById(reportId: number, userId: string): Promise<ReportWithImage> {
     const report = await this.reportModel.getReportById(reportId);
 
     if (!report) {
@@ -72,7 +72,7 @@ export class ReportService {
   }
 
   // Verificar que un reporte existe y pertenece al usuario
-  async verifyReportOwnership(reportId: number, userId: number): Promise<void> {
+  async verifyReportOwnership(reportId: number, userId: string): Promise<void> {
     const report = await this.reportModel.getReportById(reportId);
 
     if (!report || report.user_id !== userId) {
@@ -81,7 +81,7 @@ export class ReportService {
   }
 
   // Actualizar un reporte
-  async updateReport(reportId: number, userId: number, updateData: UpdateReportInput): Promise<void> {
+  async updateReport(reportId: number, userId: string, updateData: UpdateReportInput): Promise<void> {
     // Verificar que el reporte existe y pertenece al usuario
     await this.verifyReportOwnership(reportId, userId);
 
@@ -95,7 +95,7 @@ export class ReportService {
   }
 
   // Eliminar un reporte
-  async deleteReport(reportId: number, userId: number): Promise<void> {
+  async deleteReport(reportId: number, userId: string): Promise<void> {
     // Verificar que el reporte existe y pertenece al usuario
     await this.verifyReportOwnership(reportId, userId);
 

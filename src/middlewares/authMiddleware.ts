@@ -3,7 +3,7 @@ import jwt, { JwtPayload } from 'jsonwebtoken';
 import { JWT_CONFIG } from '../config';
 
 interface DecodedToken extends JwtPayload {
-  user_id: number;
+  user_id: string;
   role?: 'user' | 'admin';
 }
 
@@ -35,9 +35,7 @@ export const authenticate = (req: Request, res: Response, next: NextFunction): v
 
       // Si la URL tiene un user_id, validarlo
       if (req.params.user_id) {
-        const userIdFromUrl = parseInt(req.params.user_id, 10);
-
-        if (isNaN(userIdFromUrl) || decodedToken.user_id !== userIdFromUrl) {
+        if (decodedToken.user_id !== req.params.user_id) {
           res.status(403).json({ message: 'No tienes permiso para realizar esta acción' });
           return;
         }

@@ -11,7 +11,7 @@ export interface TokenPair {
 }
 
 export interface UserInfo {
-  user_id: number;
+  user_id: string;
   email: string;
   name: string;
   phone_number?: string;
@@ -76,14 +76,13 @@ export class AuthService {
     // Buscar o crear usuario por google_id
     let user = await this.userModel.getUserByGoogleId(googleId);
     if (!user) {
-      // Si no existe, opcionalmente intentar por email (por si hay una cuenta previa huérfana)
       const userByEmail = await this.userModel.getUserByEmail(email);
       if (userByEmail) {
-        // No hay actualización del google_id prevista; para esquema limpio creamos uno nuevo si no hay
-        // vínculo. En producción, aquí se podría actualizar el registro existente.
-        user = userByEmail as any;
+        user = userByEmail;
       } else {
+        const generatedUserId = await this.generateUserId(email);
         await this.userModel.createUserFromGoogle({
+          user_id: generatedUserId,
           email,
           google_id: googleId,
           name,
@@ -115,7 +114,7 @@ export class AuthService {
     try {
       // Verificar el refresh token
       const decoded = jwt.verify(refreshToken, JWT_CONFIG.REFRESH_TOKEN_SECRET) as {
-        user_id: number;
+        user_id: string;
       };
 
       // Generar un nuevo access token
@@ -130,7 +129,7 @@ export class AuthService {
   }
 
   // Obtener información del usuario
-  async getUserInfo(userId: number): Promise<UserInfo> {
+  async getUserInfo(userId: string): Promise<UserInfo> {
     const user = await this.userModel.getUserById(userId);
     if (!user) {
       throw new NotFoundError('Usuario no encontrado');
@@ -146,25 +145,17 @@ export class AuthService {
   }
 
   // Actualizar información del usuario
-  async updateUser(userId: number, input: UpdateUserInput): Promise<void> {
+  async updateUser(userId: string, input: UpdateUserInput): Promise<void> {
     const user = await this.userModel.getUserById(userId);
     if (!user) {
       throw new NotFoundError('Usuario no encontrado');
-    }
-
-    // Si se actualiza el email, verificar que no exista otro usuario con ese email
-    if (input.email && input.email !== user.email) {
-      const existingUser = await this.userModel.getUserByEmail(input.email);
-      if (existingUser) {
-        throw new ConflictError('El email ya está en uso');
-      }
     }
 
     await this.userModel.updateUser(userId, input);
   }
 
   // Generar tokens JWT
-  private generateTokens(userId: number, role: 'user' | 'admin'): TokenPair {
+  private generateTokens(userId: string, role: 'user' | 'admin'): TokenPair {
     const accessToken = jwt.sign({ user_id: userId, role }, JWT_CONFIG.ACCESS_TOKEN_SECRET, {
       expiresIn: JWT_CONFIG.ACCESS_TOKEN_EXPIRES_IN,
     } as jwt.SignOptions);
@@ -174,5 +165,21 @@ export class AuthService {
     } as jwt.SignOptions);
 
     return { accessToken, refreshToken };
+  }
+
+  private async generateUserId(email: string): Promise<string> {
+    const localPart = email.split('@')[0] || 'user';
+    const sanitized = localPart.replace(/[^a-zA-Z0-9]/g, '').toLowerCase() || 'user';
+
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const randomSuffix = Math.floor(1000 + Math.random() * 9000);
+      const candidate = `${sanitized}${randomSuffix}`;
+      const existing = await this.userModel.getUserById(candidate);
+      if (!existing) {
+        return candidate;
+      }
+    }
+
+    throw new ConflictError('No se pudo generar un identificador de usuario único');
   }
 }

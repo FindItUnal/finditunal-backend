@@ -3,8 +3,8 @@ import { MySQLDatabase } from '../database/mysql';
 import { UpdateUserInput } from '../schemas/authSchemas';
 import { DatabaseError } from '../utils/errors';
 
-interface User {
-  user_id: number;
+export interface UserRecord {
+  user_id: string;
   email: string;
   google_id: string;
   name: string;
@@ -17,14 +17,18 @@ interface User {
 }
 
 class UserModel {
+  private readonly tableName = 'users';
+
   // Buscar un usuario por email
-  async getUserByEmail(email: string): Promise<User | null> {
+  async getUserByEmail(email: string): Promise<UserRecord | null> {
     try {
       const db = await MySQLDatabase.getInstance();
       const connection = await db.getConnection();
       try {
-        const [rows] = await connection.query<RowDataPacket[]>('SELECT * FROM Users WHERE email = ?', [email]);
-        return (rows[0] as User) || null;
+        const [rows] = await connection.query<RowDataPacket[]>(`SELECT * FROM ${this.tableName} WHERE email = ?`, [
+          email,
+        ]);
+        return (rows[0] as UserRecord) || null;
       } finally {
         connection.release();
       }
@@ -34,13 +38,15 @@ class UserModel {
     }
   }
 
-  async getUserById(user_id: number): Promise<User | null> {
+  async getUserById(user_id: string): Promise<UserRecord | null> {
     try {
       const db = await MySQLDatabase.getInstance();
       const connection = await db.getConnection();
       try {
-        const [rows] = await connection.query<RowDataPacket[]>('SELECT * FROM Users WHERE user_id = ?', [user_id]);
-        return (rows[0] as User) || null;
+        const [rows] = await connection.query<RowDataPacket[]>(`SELECT * FROM ${this.tableName} WHERE user_id = ?`, [
+          user_id,
+        ]);
+        return (rows[0] as UserRecord) || null;
       } finally {
         connection.release();
       }
@@ -51,13 +57,15 @@ class UserModel {
   }
 
   // Buscar un usuario por google_id
-  async getUserByGoogleId(google_id: string): Promise<User | null> {
+  async getUserByGoogleId(google_id: string): Promise<UserRecord | null> {
     try {
       const db = await MySQLDatabase.getInstance();
       const connection = await db.getConnection();
       try {
-        const [rows] = await connection.query<RowDataPacket[]>('SELECT * FROM Users WHERE google_id = ?', [google_id]);
-        return (rows[0] as User) || null;
+        const [rows] = await connection.query<RowDataPacket[]>(`SELECT * FROM ${this.tableName} WHERE google_id = ?`, [
+          google_id,
+        ]);
+        return (rows[0] as UserRecord) || null;
       } finally {
         connection.release();
       }
@@ -69,6 +77,7 @@ class UserModel {
 
   // Crear un nuevo usuario vía Google OAuth
   async createUserFromGoogle(input: {
+    user_id: string;
     email: string;
     google_id: string;
     name: string;
@@ -80,8 +89,8 @@ class UserModel {
       const connection = await db.getConnection();
       try {
         await connection.query(
-          'INSERT INTO Users (email, google_id, name, phone_number, role) VALUES (?, ?, ?, ?, ?)',
-          [input.email, input.google_id, input.name, input.phone_number || null, input.role],
+          `INSERT INTO ${this.tableName} (user_id, email, google_id, name, phone_number, role) VALUES (?, ?, ?, ?, ?, ?)`,
+          [input.user_id, input.email, input.google_id, input.name, input.phone_number || null, input.role],
         );
       } finally {
         connection.release();
@@ -92,36 +101,19 @@ class UserModel {
     }
   }
 
-  // Actualizar informacion del usuario (solo campos permitidos)
-  async updateUser(user_id: number, input: UpdateUserInput): Promise<void> {
+  // Actualizar información del usuario (solo phone_number)
+  async updateUser(user_id: string, input: UpdateUserInput): Promise<void> {
+    if (input.phone_number === undefined) {
+      return;
+    }
     try {
       const db = await MySQLDatabase.getInstance();
       const connection = await db.getConnection();
       try {
-        const updates: string[] = [];
-        const values: any[] = [];
-
-        // Solo actualizar campos que estén definidos y sean permitidos
-        if (input.email !== undefined) {
-          updates.push('email = ?');
-          values.push(input.email);
-        }
-        if (input.name !== undefined) {
-          updates.push('name = ?');
-          values.push(input.name);
-        }
-        if (input.phone_number !== undefined) {
-          updates.push('phone_number = ?');
-          values.push(input.phone_number || null);
-        }
-
-        if (updates.length === 0) {
-          return; // No hay nada que actualizar
-        }
-
-        values.push(user_id);
-        const query = `UPDATE Users SET ${updates.join(', ')} WHERE user_id = ?`;
-        await connection.query(query, values);
+        await connection.query(`UPDATE ${this.tableName} SET phone_number = ? WHERE user_id = ?`, [
+          input.phone_number || null,
+          user_id,
+        ]);
       } finally {
         connection.release();
       }

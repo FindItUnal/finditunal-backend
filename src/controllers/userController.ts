@@ -20,7 +20,7 @@ export class UserController {
   // Actualizar información del usuario
   updateUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const userId = parseInt(req.params.user_id, 10);
+      const userId = req.params.user_id;
       await this.authService.updateUser(userId, req.body);
 
       sendSuccess(res, { message: 'Usuario actualizado exitosamente' });

@@ -15,12 +15,7 @@ export const createUserRouter = (userModel: UserModel): Router => {
   userRouter.get('/profile', authenticate, userController.getUserInformation);
 
   // Actualizar información del usuario
-  userRouter.patch(
-    '/:user_id/profile/update',
-    authenticate,
-    validate(updateUserSchema.partial()),
-    userController.updateUser,
-  );
+  userRouter.patch('/:user_id/profile/update', authenticate, validate(updateUserSchema), userController.updateUser);
 
   return userRouter;
 };

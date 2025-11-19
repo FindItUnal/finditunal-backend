@@ -4,7 +4,7 @@ import { DatabaseError } from '../utils/errors';
 
 export interface Report {
   report_id: number;
-  user_id: number;
+  user_id: string;
   category_id: number;
   location_id: number;
   title: string;
@@ -55,7 +55,7 @@ class ReportModel {
   }
 
   // Traer reportes del usuario por id
-  async getReportsByUserId(user_id: number): Promise<Report[]> {
+  async getReportsByUserId(user_id: string): Promise<Report[]> {
     try {
       const db = await MySQLDatabase.getInstance();
       const connection = await db.getConnection();
