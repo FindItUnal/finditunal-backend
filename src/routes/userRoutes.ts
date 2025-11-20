@@ -17,5 +17,8 @@ export const createUserRouter = (userModel: UserModel): Router => {
   // Actualizar información del usuario
   userRouter.patch('/:user_id/profile/update', authenticate, validate(updateUserSchema), userController.updateUser);
 
+  // Actualizar perfil del usuario autenticado (sin enviar user_id en la URL)
+  userRouter.patch('/profile/update', authenticate, validate(updateUserSchema), userController.updateCurrentUser);
+
   return userRouter;
 };

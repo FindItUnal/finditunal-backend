@@ -27,11 +27,18 @@ export const authenticate = (req: Request, res: Response, next: NextFunction): v
 
       const decodedToken = decoded as DecodedToken;
 
-      // Guardar los datos del usuario en `req.body.user`
-      req.body.user = {
+      // Guardar los datos del usuario en `req.body.user` (compatibilidad) y en `req.user` (propiedad dedicada)
+      const userPayload = {
         user_id: decodedToken.user_id,
         role: decodedToken.role,
       };
+      try {
+        req.body.user = userPayload;
+      } catch (e) {
+        // ignore
+      }
+      // Propiedad dedicada para evitar que middlewares posteriores (p. ej. validation) sobrescriban el cuerpo
+      (req as any).user = userPayload;
 
       // Si la URL tiene un user_id, validarlo
       if (req.params.user_id) {

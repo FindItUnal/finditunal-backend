@@ -43,6 +43,19 @@ export class AuthController {
       const redirectUrl = `${APP_CONFIG.FRONTEND_URL}`;
       res.redirect(redirectUrl);
     } catch (error) {
+      // If the error is due to domain restriction, redirect back to frontend login with a flag
+      try {
+        // Only redirect for known unauthorized domain errors to give user feedback
+        if (error instanceof AppError && error.statusCode === 401 && /dominio/i.test(error.message)) {
+          const frontend = APP_CONFIG.FRONTEND_URL.replace(/\/$/, '') + '/login';
+          const params = new URLSearchParams({ error: 'domain_not_allowed' });
+          res.redirect(`${frontend}?${params.toString()}`);
+          return;
+        }
+      } catch (e) {
+        // ignore and fallthrough to default error handler
+      }
+
       next(error);
     }
   };
