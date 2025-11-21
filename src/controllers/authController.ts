@@ -25,17 +25,17 @@ export class AuthController {
 
       res.cookie('accessToken', tokens.accessToken, {
         httpOnly: true,
-        secure: true,
+        secure: APP_CONFIG.COOKIE_SECURE,
         maxAge: 10 * 60 * 1000,
-        sameSite: 'none',
+        sameSite: APP_CONFIG.COOKIE_SECURE ? 'none' : 'lax',
         path: '/',
       });
 
       res.cookie('refreshToken', tokens.refreshToken, {
         httpOnly: true,
-        secure: true,
+        secure: APP_CONFIG.COOKIE_SECURE,
         maxAge: 30 * 60 * 1000,
-        sameSite: 'none',
+        sameSite: APP_CONFIG.COOKIE_SECURE ? 'none' : 'lax',
         path: '/',
       });
 
@@ -74,9 +74,9 @@ export class AuthController {
       // Configurar la nueva cookie de access token
       res.cookie('accessToken', accessToken, {
         httpOnly: true,
-        secure: true,
+        secure: APP_CONFIG.COOKIE_SECURE,
         maxAge: 10 * 60 * 1000, // 10 minutos
-        sameSite: 'none',
+        sameSite: APP_CONFIG.COOKIE_SECURE ? 'none' : 'lax',
         path: '/',
       });
 
@@ -91,14 +91,14 @@ export class AuthController {
     // Eliminar las cookies de accessToken y refreshToken
     res.clearCookie('accessToken', {
       httpOnly: true,
-      secure: true,
-      sameSite: 'none',
+      secure: APP_CONFIG.COOKIE_SECURE,
+      sameSite: APP_CONFIG.COOKIE_SECURE ? 'none' : 'lax',
       path: '/',
     });
     res.clearCookie('refreshToken', {
       httpOnly: true,
-      secure: true,
-      sameSite: 'none',
+      secure: APP_CONFIG.COOKIE_SECURE,
+      sameSite: APP_CONFIG.COOKIE_SECURE ? 'none' : 'lax',
       path: '/',
     });
 

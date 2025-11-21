@@ -25,5 +25,6 @@ export const ACCESS_RULES = {
 
 export const APP_CONFIG = {
   FRONTEND_URL: process.env.FRONTEND_URL || 'http://localhost:5173',
-  COOKIE_SECURE: process.env.COOKIE_SECURE === 'true' || true,
+  // In development allow non-secure cookies by default. Set COOKIE_SECURE=true in production environments.
+  COOKIE_SECURE: process.env.COOKIE_SECURE === 'true',
 };
