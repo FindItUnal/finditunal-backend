@@ -4,6 +4,8 @@ import { corsMiddleware } from './middlewares/corsMiddleware';
 import { errorHandler } from './middlewares/errorHandler';
 import { MySQLDatabase } from './database/mysql';
 import cookieParser from 'cookie-parser';
+import swaggerUi from 'swagger-ui-express';
+import { swaggerSpec } from './config/swagger';
 import { createAuthRouter } from './routes/authRoutes';
 import { createReportRouter } from './routes/reportRoutes';
 import { createUserRouter } from './routes/userRoutes';
@@ -23,6 +25,69 @@ export const createApp = async ({ models }: { models: Models }): Promise<express
     app.use(cookieParser());
     app.disable('x-powered-by');
 
+    // Swagger UI
+    app.use(
+      '/swagger',
+      swaggerUi.serve,
+      swaggerUi.setup(swaggerSpec, {
+        customCss: '.swagger-ui .topbar { display: none }',
+        customSiteTitle: 'FindIt UNAL API Documentation',
+        swaggerOptions: {
+          persistAuthorization: true,
+          displayRequestDuration: true,
+        },
+      }),
+    );
+
+    // Servir especificación JSON
+    app.get('/swagger.json', (_req, res) => {
+      res.setHeader('Content-Type', 'application/json');
+      res.send(swaggerSpec);
+    });
+
+    /**
+     * @swagger
+     * /health:
+     *   get:
+     *     summary: Verificar el estado del servidor
+     *     description: Endpoint de health check que verifica el estado del servidor y la conexión a la base de datos
+     *     tags: [Health]
+     *     responses:
+     *       200:
+     *         description: Servidor funcionando correctamente
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/HealthResponse'
+     *             example:
+     *               status: 'ok'
+     *               message: 'El servidor está funcionando correctamente'
+     *               timestamp: '2024-01-15T10:30:00.000Z'
+     *               database: 'connected'
+     *               uptime: 3600
+     *       503:
+     *         description: Servidor con problemas
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 status:
+     *                   type: string
+     *                   example: 'error'
+     *                 message:
+     *                   type: string
+     *                   example: 'El servidor tiene problemas'
+     *                 timestamp:
+     *                   type: string
+     *                   format: date-time
+     *                 database:
+     *                   type: string
+     *                   example: 'disconnected'
+     *                 error:
+     *                   type: string
+     *                   example: 'Error al conectar a la base de datos'
+     */
     // Endpoint de health check - verificación del estado del servidor
     app.get('/health', async (_req, res) => {
       try {
