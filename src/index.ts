@@ -23,6 +23,33 @@ export const createApp = async ({ models }: { models: Models }): Promise<express
     app.use(cookieParser());
     app.disable('x-powered-by');
 
+    // Endpoint de health check - verificación del estado del servidor
+    app.get('/health', async (_req, res) => {
+      try {
+        // Verificar conexión a la base de datos
+        const db = await MySQLDatabase.getInstance();
+        const connection = await db.getConnection();
+        await connection.ping();
+        connection.release();
+
+        res.status(200).json({
+          status: 'ok',
+          message: 'El servidor está funcionando correctamente',
+          timestamp: new Date().toISOString(),
+          database: 'connected',
+          uptime: process.uptime(),
+        });
+      } catch (error) {
+        res.status(503).json({
+          status: 'error',
+          message: 'El servidor tiene problemas',
+          timestamp: new Date().toISOString(),
+          database: 'disconnected',
+          error: error instanceof Error ? error.message : 'Error desconocido',
+        });
+      }
+    });
+
     app.use('/auth', createAuthRouter(new models.userModel()));
 
     app.use('/user', createReportRouter(new models.reportModel(), new models.imageModel()));
