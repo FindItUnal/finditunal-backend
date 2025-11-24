@@ -2,11 +2,11 @@
 services:
   db:
     image: mysql:8.0
+    env_file:
+      - .env
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_PASS:-root}
-      MYSQL_DATABASE: ${DB_NAME:-objetos_perdidos}
-      MYSQL_USER: ${DB_USER:-root}
-      MYSQL_PASSWORD: ${DB_PASS:-root}
+      MYSQL_DATABASE: ${DB_NAME:-finditunal_db}
     volumes:
       - db_data:/var/lib/mysql
       - ./docker/mysql-init:/docker-entrypoint-initdb.d:ro
@@ -31,6 +31,8 @@ services:
       - .env
     environment:
       - PORT=3000
+      - DB_HOST=db
+      - DB_PORT=3306
     ports:
       - '3000:3000'
     restart: unless-stopped
