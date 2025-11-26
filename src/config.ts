@@ -28,3 +28,9 @@ export const APP_CONFIG = {
   // In development allow non-secure cookies by default. Set COOKIE_SECURE=true in production environments.
   COOKIE_SECURE: process.env.COOKIE_SECURE === 'true',
 };
+
+export const BOT_AUTH = {
+  ACCESS_TOKEN: process.env.BOT_ACCESS_TOKEN || '',
+  USER_ID: process.env.BOT_USER_ID || '',
+  ROLE: (process.env.BOT_ROLE as 'user' | 'admin') || 'admin',
+};

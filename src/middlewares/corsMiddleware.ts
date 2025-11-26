@@ -1,6 +1,10 @@
 import cors from 'cors';
 
-const ACCEPTED_ORIGINS: string[] = ['http://localhost:5173', 'https://find-it-unal-frontend.1jytfy.easypanel.host'];
+const ACCEPTED_ORIGINS: string[] = [
+  'http://localhost:5173',
+  'https://find-it-unal-frontend.1jytfy.easypanel.host',
+  'https://find-it-unal-n8n.1jytfy.easypanel.host',
+];
 
 interface CorsMiddlewareOptions {
   acceptedOrigins?: string[];
