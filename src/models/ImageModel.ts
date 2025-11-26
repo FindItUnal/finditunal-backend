@@ -13,7 +13,7 @@ class ImageModel {
       const db = await MySQLDatabase.getInstance();
       const connection = await db.getConnection();
       try {
-        await connection.query('INSERT INTO Images (image_url, report_id) VALUES (?, ?)', [image_url, report_id]);
+        await connection.query('INSERT INTO images (image_url, report_id) VALUES (?, ?)', [image_url, report_id]);
       } finally {
         connection.release();
       }
@@ -28,7 +28,7 @@ class ImageModel {
       const db = await MySQLDatabase.getInstance();
       const connection = await db.getConnection();
       try {
-        const [rows] = await connection.query<RowDataPacket[]>('SELECT image_url FROM Images WHERE report_id = ?', [
+        const [rows] = await connection.query<RowDataPacket[]>('SELECT image_url FROM images WHERE report_id = ?', [
           report_id,
         ]);
         return (rows[0] as Image) || null;
@@ -47,7 +47,7 @@ class ImageModel {
       const db = await MySQLDatabase.getInstance();
       const connection = await db.getConnection();
       try {
-        await connection.query('DELETE FROM Images WHERE report_id = ?', [report_id]);
+        await connection.query('DELETE FROM images WHERE report_id = ?', [report_id]);
       } finally {
         connection.release();
       }

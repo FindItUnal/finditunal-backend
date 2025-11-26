@@ -13,6 +13,7 @@ import { createLocationRouter } from './routes/LocationRoutes';
 import { createCategoryRouter } from './routes/CategoryRoutes';
 import { createObjectRouter } from './routes/objectRoutes';
 import { createImageRouter } from './routes/imageRoutes';
+import { createComplaintRouter } from './routes/complaintRoutes';
 // import 'dotenv/config'
 
 export const createApp = async ({ models }: { models: Models }): Promise<express.Application> => {
@@ -118,6 +119,7 @@ export const createApp = async ({ models }: { models: Models }): Promise<express
     app.use('/auth', createAuthRouter(new models.userModel()));
 
     app.use('/user', createReportRouter(new models.reportModel(), new models.imageModel()));
+    app.use('/user', createComplaintRouter(new models.complaintModel(), new models.reportModel()));
 
     app.use('/user', createUserRouter(new models.userModel()));
 

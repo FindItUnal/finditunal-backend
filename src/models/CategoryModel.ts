@@ -14,7 +14,7 @@ class CategoryModel {
       const db = await MySQLDatabase.getInstance();
       const connection = await db.getConnection();
       try {
-        const [rows] = await connection.query<RowDataPacket[]>('SELECT * FROM Categories ORDER BY name ASC');
+        const [rows] = await connection.query<RowDataPacket[]>('SELECT * FROM categories ORDER BY name ASC');
         return rows as Category[];
       } finally {
         connection.release();

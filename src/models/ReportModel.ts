@@ -29,7 +29,7 @@ class ReportModel {
       const connection = await db.getConnection();
       try {
         const [result] = await connection.query<ResultSetHeader>(
-          'INSERT INTO Reports (user_id, category_id, location_id, title, description, status, date_lost_or_found, contact_method) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+          'INSERT INTO reports (user_id, category_id, location_id, title, description, status, date_lost_or_found, contact_method) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
           [
             report.user_id,
             report.category_id,
@@ -61,7 +61,7 @@ class ReportModel {
       const connection = await db.getConnection();
       try {
         const [rows] = await connection.query<RowDataPacket[]>(
-          'SELECT * FROM Reports WHERE user_id = ? ORDER BY created_at DESC',
+          'SELECT * FROM reports WHERE user_id = ? ORDER BY created_at DESC',
           [user_id],
         );
         return rows as Report[];
@@ -80,7 +80,7 @@ class ReportModel {
       const db = await MySQLDatabase.getInstance();
       const connection = await db.getConnection();
       try {
-        const [rows] = await connection.query<RowDataPacket[]>('SELECT * FROM Reports WHERE report_id = ?', [
+        const [rows] = await connection.query<RowDataPacket[]>('SELECT * FROM reports WHERE report_id = ?', [
           report_id,
         ]);
         return (rows[0] as Report) || null;
@@ -136,7 +136,7 @@ class ReportModel {
         }
 
         values.push(report_id);
-        const query = `UPDATE Reports SET ${updatesList.join(', ')} WHERE report_id = ?`;
+        const query = `UPDATE reports SET ${updatesList.join(', ')} WHERE report_id = ?`;
         await connection.query(query, values);
       } finally {
         connection.release();
@@ -153,7 +153,7 @@ class ReportModel {
       const db = await MySQLDatabase.getInstance();
       const connection = await db.getConnection();
       try {
-        await connection.query('DELETE FROM Reports WHERE report_id = ?', [report_id]);
+        await connection.query('DELETE FROM reports WHERE report_id = ?', [report_id]);
       } finally {
         connection.release();
       }

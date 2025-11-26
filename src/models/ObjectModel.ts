@@ -32,10 +32,10 @@ class ObjectModel {
             r.date_lost_or_found,
             r.description,
             i.image_url
-          FROM Reports r
-          JOIN Categories c ON r.category_id = c.category_id
-          JOIN Locations l ON r.location_id = l.location_id
-          LEFT JOIN Images i ON r.report_id = i.report_id
+          FROM reports r
+          JOIN categories c ON r.category_id = c.category_id
+          JOIN locations l ON r.location_id = l.location_id
+          LEFT JOIN images i ON r.report_id = i.report_id
           ORDER BY r.created_at DESC
         `);
         return rows as Object[];
@@ -66,10 +66,10 @@ class ObjectModel {
             r.date_lost_or_found,
             r.description,
             i.image_url
-          FROM Reports r
-          JOIN Categories c ON r.category_id = c.category_id
-          JOIN Locations l ON r.location_id = l.location_id
-          LEFT JOIN Images i ON r.report_id = i.report_id
+          FROM reports r
+          JOIN categories c ON r.category_id = c.category_id
+          JOIN locations l ON r.location_id = l.location_id
+          LEFT JOIN images i ON r.report_id = i.report_id
           WHERE r.report_id = ?
         `,
           [report_id],
@@ -110,10 +110,10 @@ class ObjectModel {
             r.date_lost_or_found,
             r.description,
             i.image_url
-          FROM Reports r
-          JOIN Categories c ON r.category_id = c.category_id
-          JOIN Locations l ON r.location_id = l.location_id
-          LEFT JOIN Images i ON r.report_id = i.report_id
+          FROM reports r
+          JOIN categories c ON r.category_id = c.category_id
+          JOIN locations l ON r.location_id = l.location_id
+          LEFT JOIN images i ON r.report_id = i.report_id
         `;
 
         const params: any[] = [];

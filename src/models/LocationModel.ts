@@ -14,7 +14,7 @@ class LocationModel {
       const db = await MySQLDatabase.getInstance();
       const connection = await db.getConnection();
       try {
-        const [rows] = await connection.query<RowDataPacket[]>('SELECT * FROM Locations ORDER BY name ASC');
+        const [rows] = await connection.query<RowDataPacket[]>('SELECT * FROM locations ORDER BY name ASC');
         return rows as Location[];
       } finally {
         connection.release();

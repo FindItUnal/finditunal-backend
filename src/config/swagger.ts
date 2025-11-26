@@ -267,6 +267,109 @@ const options: swaggerJsdoc.Options = {
             },
           },
         },
+        Complaint: {
+          type: 'object',
+          properties: {
+            complaint_id: {
+              type: 'integer',
+              description: 'ID único de la denuncia',
+              example: 10,
+            },
+            report_id: {
+              type: 'integer',
+              description: 'ID del reporte denunciado',
+              example: 5,
+            },
+            reporter_user_id: {
+              type: 'string',
+              description: 'Usuario que envió la denuncia',
+              example: '550e8400-e29b-41d4-a716-446655440000',
+            },
+            reason: {
+              type: 'string',
+              enum: ['spam', 'inappropriate', 'fraud', 'other'],
+              description: 'Motivo de la denuncia',
+              example: 'spam',
+            },
+            description: {
+              type: 'string',
+              nullable: true,
+              description: 'Detalle enviado por el usuario',
+              example: 'El reporte incluye información ofensiva.',
+            },
+            status: {
+              type: 'string',
+              enum: ['pending', 'in_review', 'resolved', 'rejected'],
+              description: 'Estado de revisión',
+              example: 'pending',
+            },
+            admin_notes: {
+              type: 'string',
+              nullable: true,
+              description: 'Notas internas del administrador',
+              example: 'Se solicitó más evidencia al denunciante.',
+            },
+            resolved_by: {
+              type: 'string',
+              nullable: true,
+              description: 'ID del administrador que resolvió la denuncia',
+              example: 'admin-user-id',
+            },
+            resolved_at: {
+              type: 'string',
+              format: 'date-time',
+              nullable: true,
+              description: 'Fecha de resolución',
+              example: '2024-02-10T15:00:00Z',
+            },
+            created_at: {
+              type: 'string',
+              format: 'date-time',
+              description: 'Fecha de creación',
+              example: '2024-02-09T12:00:00Z',
+            },
+            updated_at: {
+              type: 'string',
+              format: 'date-time',
+              description: 'Última actualización',
+              example: '2024-02-10T16:00:00Z',
+            },
+          },
+        },
+        CreateComplaint: {
+          type: 'object',
+          required: ['reason'],
+          properties: {
+            reason: {
+              type: 'string',
+              enum: ['spam', 'inappropriate', 'fraud', 'other'],
+              description: 'Motivo seleccionado',
+              example: 'fraud',
+            },
+            description: {
+              type: 'string',
+              nullable: true,
+              description: 'Explicación opcional del usuario',
+              example: 'Se está intentando vender un artículo inexistente.',
+            },
+          },
+        },
+        UpdateComplaint: {
+          type: 'object',
+          properties: {
+            status: {
+              type: 'string',
+              enum: ['pending', 'in_review', 'resolved', 'rejected'],
+              description: 'Nuevo estado de la denuncia',
+              example: 'in_review',
+            },
+            admin_notes: {
+              type: 'string',
+              description: 'Notas internas para dejar trazabilidad',
+              example: 'Se está verificando la información con el denunciante.',
+            },
+          },
+        },
         Object: {
           type: 'object',
           properties: {
@@ -515,6 +618,10 @@ const options: swaggerJsdoc.Options = {
       {
         name: 'Images',
         description: 'Endpoints de imágenes',
+      },
+      {
+        name: 'Complaints',
+        description: 'Endpoints para denuncias de publicaciones',
       },
     ],
   },

@@ -5,6 +5,7 @@ import CategoryModel from './models/CategoryModel';
 import LocationModel from './models/LocationModel';
 import ObjectModel from './models/ObjectModel';
 import ImageModel from './models/ImageModel';
+import ComplaintModel from './models/ComplaintModel';
 
 createApp({
   models: {
@@ -14,5 +15,6 @@ createApp({
     locationModel: LocationModel,
     objectModel: ObjectModel,
     imageModel: ImageModel,
+    complaintModel: ComplaintModel,
   },
 });
