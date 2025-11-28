@@ -38,7 +38,7 @@ export class ObjectController {
         startDate: startDate as string,
         endDate: endDate as string,
         keyword: keyword as string,
-        status: status as 'perdido' | 'encontrado',
+        status: status as 'perdido' | 'encontrado' | 'entregado',
       });
 
       sendSuccess(res, objects);

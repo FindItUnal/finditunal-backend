@@ -9,7 +9,7 @@ export interface Report {
   location_id: number;
   title: string;
   description?: string;
-  status: 'perdido' | 'encontrado';
+  status: 'perdido' | 'encontrado' | 'entregado';
   date_lost_or_found: Date;
   contact_method: string;
   created_at: Date;

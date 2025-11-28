@@ -1,7 +1,9 @@
 import ComplaintModel, { ComplaintRecord, ComplaintStatus, ComplaintReason } from '../models/ComplaintModel';
 import ReportModel from '../models/ReportModel';
+import ImageModel from '../models/ImageModel';
 import { CreateComplaintInput, UpdateComplaintStatusInput } from '../schemas/complaintSchemas';
 import { NotFoundError } from '../utils/errors';
+import { deleteImage } from '../middlewares/multerMiddleware';
 
 interface ComplaintFilters {
   status?: ComplaintStatus;
@@ -13,7 +15,16 @@ export class ComplaintService {
   constructor(
     private complaintModel: ComplaintModel,
     private reportModel: ReportModel,
+    private imageModel: ImageModel,
   ) {}
+
+  private async getComplaintOrThrow(complaintId: number): Promise<ComplaintRecord> {
+    const complaint = await this.complaintModel.getComplaintById(complaintId);
+    if (!complaint) {
+      throw new NotFoundError('Denuncia no encontrada');
+    }
+    return complaint;
+  }
 
   async submitComplaint(reporterUserId: string, reportId: number, input: CreateComplaintInput): Promise<number> {
     const report = await this.reportModel.getReportById(reportId);
@@ -60,11 +71,7 @@ export class ComplaintService {
     adminUserId: string,
     input: UpdateComplaintStatusInput,
   ): Promise<void> {
-    const complaint = await this.complaintModel.getComplaintById(complaintId);
-    if (!complaint) {
-      throw new NotFoundError('Denuncia no encontrada');
-    }
-
+    await this.getComplaintOrThrow(complaintId);
     const updates: Partial<ComplaintRecord> = {};
 
     if (input.status) {
@@ -83,6 +90,41 @@ export class ComplaintService {
     }
 
     await this.complaintModel.updateComplaint(complaintId, updates);
+  }
+
+  async discardComplaint(complaintId: number, adminUserId: string, adminNotes: string): Promise<void> {
+    await this.getComplaintOrThrow(complaintId);
+
+    await this.complaintModel.updateComplaint(complaintId, {
+      status: 'resolved',
+      admin_notes: adminNotes,
+      resolved_by: adminUserId,
+      resolved_at: new Date(),
+    });
+  }
+
+  async resolveComplaintAndDeleteReport(complaintId: number, adminUserId: string, adminNotes: string): Promise<void> {
+    const complaint = await this.getComplaintOrThrow(complaintId);
+
+    const report = await this.reportModel.getReportById(complaint.report_id);
+    if (!report) {
+      throw new NotFoundError('Reporte asociado no encontrado');
+    }
+
+    const imageRecord = await this.imageModel.getImageByReportId(report.report_id);
+
+    await this.complaintModel.updateComplaint(complaintId, {
+      status: 'resolved',
+      admin_notes: adminNotes,
+      resolved_by: adminUserId,
+      resolved_at: new Date(),
+    });
+
+    if (imageRecord) {
+      deleteImage(imageRecord.image_url);
+    }
+
+    await this.reportModel.deleteReport(report.report_id);
   }
 }
 

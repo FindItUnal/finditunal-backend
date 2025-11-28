@@ -11,7 +11,7 @@ export const reportSchema = z.object({
   location_id: z.string().transform((val) => Number(val)),
   title: z.string().min(1, 'El título es requerido'),
   description: z.string().optional(),
-  status: z.enum(['perdido', 'encontrado']),
+  status: z.enum(['perdido', 'encontrado', 'entregado']),
   date_lost_or_found: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, 'Formato de fecha inválido (YYYY-MM-DD)')

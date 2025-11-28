@@ -52,7 +52,7 @@ export class AuthController {
           res.redirect(`${frontend}?${params.toString()}`);
           return;
         }
-      } catch (e) {
+      } catch {
         // ignore and fallthrough to default error handler
       }
 

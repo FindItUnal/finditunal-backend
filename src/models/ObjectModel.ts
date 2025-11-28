@@ -8,7 +8,7 @@ export interface Object {
   description?: string;
   category: string;
   location: string;
-  status: 'perdido' | 'encontrado';
+  status: 'perdido' | 'encontrado' | 'entregado';
   contact_method: string;
   date_lost_or_found: Date;
   image_url?: string; // Nueva propiedad para la URL de la imagen
@@ -31,6 +31,7 @@ class ObjectModel {
             r.contact_method,
             r.date_lost_or_found,
             r.description,
+            r.user_id,
             i.image_url
           FROM reports r
           JOIN categories c ON r.category_id = c.category_id
@@ -65,6 +66,7 @@ class ObjectModel {
             r.contact_method,
             r.date_lost_or_found,
             r.description,
+            r.user_id,
             i.image_url
           FROM reports r
           JOIN categories c ON r.category_id = c.category_id
@@ -91,7 +93,7 @@ class ObjectModel {
     startDate?: string,
     endDate?: string,
     keyword?: string,
-    status?: 'perdido' | 'encontrado',
+    status?: 'perdido' | 'encontrado' | 'entregado',
     limit: number = 50,
     offset: number = 0,
   ): Promise<Object[]> {
@@ -109,6 +111,7 @@ class ObjectModel {
             r.contact_method,
             r.date_lost_or_found,
             r.description,
+            r.user_id,
             i.image_url
           FROM reports r
           JOIN categories c ON r.category_id = c.category_id

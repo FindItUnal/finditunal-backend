@@ -11,7 +11,7 @@ export interface ReportWithImage {
   location_id: number;
   title: string;
   description?: string;
-  status: 'perdido' | 'encontrado';
+  status: 'perdido' | 'encontrado' | 'entregado';
   date_lost_or_found: Date;
   contact_method: string;
   created_at: Date;
@@ -56,34 +56,38 @@ export class ReportService {
   }
 
   // Obtener un reporte por ID (verifica que pertenezca al usuario)
-  async getReportById(reportId: number, userId: string): Promise<ReportWithImage> {
+  async getReportById(reportId: number, userId: string, options?: { isAdmin?: boolean }): Promise<ReportWithImage> {
+    return this.verifyReportOwnership(reportId, userId, options);
+  }
+
+  // Verificar que un reporte existe y pertenece al usuario
+  async verifyReportOwnership(
+    reportId: number,
+    userId: string,
+    options?: { isAdmin?: boolean },
+  ): Promise<ReportWithImage> {
     const report = await this.reportModel.getReportById(reportId);
 
     if (!report) {
       throw new NotFoundError('Reporte no encontrado');
     }
 
-    // Verificar que el reporte pertenece al usuario
-    if (report.user_id !== userId) {
+    if (!options?.isAdmin && report.user_id !== userId) {
       throw new NotFoundError('Reporte no encontrado');
     }
 
     return report as ReportWithImage;
   }
 
-  // Verificar que un reporte existe y pertenece al usuario
-  async verifyReportOwnership(reportId: number, userId: string): Promise<void> {
-    const report = await this.reportModel.getReportById(reportId);
-
-    if (!report || report.user_id !== userId) {
-      throw new NotFoundError('Reporte no encontrado');
-    }
-  }
-
   // Actualizar un reporte
-  async updateReport(reportId: number, userId: string, updateData: UpdateReportInput): Promise<void> {
-    // Verificar que el reporte existe y pertenece al usuario
-    await this.verifyReportOwnership(reportId, userId);
+  async updateReport(
+    reportId: number,
+    userId: string,
+    updateData: UpdateReportInput,
+    options?: { isAdmin?: boolean },
+  ): Promise<void> {
+    // Verificar que el reporte existe y pertenece al usuario (o admin)
+    await this.verifyReportOwnership(reportId, userId, options);
 
     // Transformar la fecha si viene
     const dataToUpdate = {
@@ -95,9 +99,9 @@ export class ReportService {
   }
 
   // Eliminar un reporte
-  async deleteReport(reportId: number, userId: string): Promise<void> {
-    // Verificar que el reporte existe y pertenece al usuario
-    await this.verifyReportOwnership(reportId, userId);
+  async deleteReport(reportId: number, userId: string, options?: { isAdmin?: boolean }): Promise<void> {
+    // Verificar que el reporte existe y pertenece al usuario (o admin)
+    await this.verifyReportOwnership(reportId, userId, options);
 
     try {
       // Obtener la imagen asociada antes de eliminar

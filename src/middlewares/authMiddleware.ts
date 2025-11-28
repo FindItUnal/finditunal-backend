@@ -10,15 +10,21 @@ interface DecodedToken extends JwtPayload {
 const assignUserPayload = (req: Request, payload: { user_id: string; role?: 'user' | 'admin' }): void => {
   try {
     req.body.user = payload;
-  } catch (error) {
+  } catch {
     // Ignorar si el body no es escribible (p.ej. cuando es un stream)
   }
   (req as any).user = payload;
 };
 
 const validateUserIdParam = (req: Request, res: Response): boolean => {
-  if (req.params.user_id && req.body.user?.user_id && req.params.user_id !== req.body.user.user_id) {
-    res.status(403).json({ message: 'No tienes permiso para realizar esta acción' });
+  const payload = (req as any).user || req.body.user;
+
+  if (payload?.role === 'admin') {
+    return true;
+  }
+
+  if (req.params.user_id && payload?.user_id && req.params.user_id !== payload.user_id) {
+    res.status(403).json({ message: 'No tienes permiso para realizar esta acci�n' });
     return false;
   }
   return true;

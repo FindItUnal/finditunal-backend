@@ -5,11 +5,14 @@ import UserModel from '../models/UserModel';
 import { authenticate } from '../middlewares/authMiddleware';
 import { updateUserSchema } from '../schemas/authSchemas';
 import { validate } from '../middlewares/validationMiddleware';
+import { authorizeAdmin } from '../middlewares/roleMiddleware';
+import { UserAdminService } from '../services/UserAdminService';
 
 export const createUserRouter = (userModel: UserModel): Router => {
   const userRouter = Router();
   const authService = new AuthService(userModel);
-  const userController = new UserController(authService);
+  const userAdminService = new UserAdminService(userModel);
+  const userController = new UserController(authService, userAdminService);
 
   /**
    * @swagger
@@ -127,6 +130,92 @@ export const createUserRouter = (userModel: UserModel): Router => {
    */
   // Actualizar perfil del usuario autenticado (sin enviar user_id en la URL)
   userRouter.patch('/profile/update', authenticate, validate(updateUserSchema), userController.updateCurrentUser);
+
+  /**
+   * @swagger
+   * /user/admin/users:
+   *   get:
+   *     summary: Listar usuarios (admin)
+   *     description: Devuelve todos los usuarios excepto el admin autenticado y el bot configurado. Incluye totales generales.
+   *     tags: [Users]
+   *     security:
+   *       - cookieAuth: []
+   *     responses:
+   *       200:
+   *         description: Lista de usuarios para el panel de administracion.
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 total_users:
+   *                   type: integer
+   *                 active_users:
+   *                   type: integer
+   *                 users:
+   *                   type: array
+   *                   items:
+   *                     $ref: '#/components/schemas/User'
+   *       401:
+   *         $ref: '#/components/responses/UnauthorizedError'
+   *       403:
+   *         $ref: '#/components/responses/ForbiddenError'
+   */
+  userRouter.get('/admin/users', authenticate, authorizeAdmin, userController.listUsers);
+
+  /**
+   * @swagger
+   * /user/admin/users/{user_id}:
+   *   get:
+   *     summary: Obtener detalle de un usuario (admin)
+   *     description: Devuelve la informacion del usuario junto al numero total de reportes y cuantos estan en estado entregado.
+   *     tags: [Users]
+   *     security:
+   *       - cookieAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: user_id
+   *         required: true
+   *         schema:
+   *           type: string
+   *     responses:
+   *       200:
+   *         description: Informacion detallada del usuario.
+   *       401:
+   *         $ref: '#/components/responses/UnauthorizedError'
+   *       403:
+   *         $ref: '#/components/responses/ForbiddenError'
+   *       404:
+   *         $ref: '#/components/responses/NotFoundError'
+   */
+  userRouter.get('/admin/users/:user_id', authenticate, authorizeAdmin, userController.getUserDetail);
+
+  /**
+   * @swagger
+   * /user/admin/users/{user_id}/ban:
+   *   patch:
+   *     summary: Banear usuario (admin)
+   *     description: Anonimiza la informacion personal del usuario y cambia su estado a baneado.
+   *     tags: [Users]
+   *     security:
+   *       - cookieAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: user_id
+   *         required: true
+   *         schema:
+   *           type: string
+   *     responses:
+   *       200:
+   *         description: Usuario baneado.
+   *       401:
+   *         $ref: '#/components/responses/UnauthorizedError'
+   *       403:
+   *         $ref: '#/components/responses/ForbiddenError'
+   *       404:
+   *         $ref: '#/components/responses/NotFoundError'
+   */
+  userRouter.patch('/admin/users/:user_id/ban', authenticate, authorizeAdmin, userController.banUser);
 
   return userRouter;
 };

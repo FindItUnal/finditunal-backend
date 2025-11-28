@@ -10,10 +10,15 @@ export interface UserRecord {
   name: string;
   phone_number?: string;
   is_confirmed: boolean;
-  is_active: boolean;
+  is_active: number;
   role: 'user' | 'admin';
   created_at: Date;
   updated_at: Date;
+}
+
+export interface UserWithStats extends UserRecord {
+  total_reports: number;
+  delivered_reports: number;
 }
 
 class UserModel {
@@ -75,7 +80,64 @@ class UserModel {
     }
   }
 
-  // Crear un nuevo usuario vía Google OAuth
+  async listUsers(options?: { excludeUserIds?: string[] }): Promise<UserRecord[]> {
+    try {
+      const db = await MySQLDatabase.getInstance();
+      const connection = await db.getConnection();
+      try {
+        const conditions: string[] = [];
+        const values: any[] = [];
+
+        const uniqueExcludeIds = Array.from(new Set(options?.excludeUserIds?.filter(Boolean) ?? []));
+        if (uniqueExcludeIds.length) {
+          const placeholders = uniqueExcludeIds.map(() => '?').join(', ');
+          conditions.push(`user_id NOT IN (${placeholders})`);
+          values.push(...uniqueExcludeIds);
+        }
+
+        const whereClause = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+        const [rows] = await connection.query<RowDataPacket[]>(
+          `SELECT user_id, email, google_id, name, phone_number, is_confirmed, is_active, role, created_at, updated_at FROM ${this.tableName} ${whereClause} ORDER BY created_at DESC`,
+          values,
+        );
+        return rows as UserRecord[];
+      } finally {
+        connection.release();
+      }
+    } catch (error) {
+      console.error('Error al listar usuarios:', error);
+      throw new DatabaseError('Error al listar usuarios');
+    }
+  }
+
+  async getUserWithStats(user_id: string): Promise<UserWithStats | null> {
+    try {
+      const db = await MySQLDatabase.getInstance();
+      const connection = await db.getConnection();
+      try {
+        const [rows] = await connection.query<RowDataPacket[]>(
+          `
+          SELECT 
+            u.*,
+            (SELECT COUNT(*) FROM reports r WHERE r.user_id = u.user_id) AS total_reports,
+            (SELECT COUNT(*) FROM reports r WHERE r.user_id = u.user_id AND r.status = 'entregado') AS delivered_reports
+          FROM ${this.tableName} u
+          WHERE u.user_id = ?
+          LIMIT 1
+        `,
+          [user_id],
+        );
+        return (rows[0] as UserWithStats) || null;
+      } finally {
+        connection.release();
+      }
+    } catch (error) {
+      console.error('Error al obtener usuario con estadisticas:', error);
+      throw new DatabaseError('Error al buscar usuario');
+    }
+  }
+
+  // Crear un nuevo usuario via Google OAuth
   async createUserFromGoogle(input: {
     user_id: string;
     email: string;
@@ -101,7 +163,7 @@ class UserModel {
     }
   }
 
-  // Actualizar información del usuario (solo phone_number)
+  // Actualizar informacion del usuario (solo phone_number)
   async updateUser(user_id: string, input: UpdateUserInput): Promise<void> {
     if (input.phone_number === undefined) {
       return;
@@ -120,6 +182,29 @@ class UserModel {
     } catch (error) {
       console.error('Error al actualizar usuario:', error);
       throw new DatabaseError('Error al actualizar usuario');
+    }
+  }
+
+  async banUser(
+    user_id: string,
+    updates: { google_id: string; name?: string; phone_number?: string | null },
+  ): Promise<void> {
+    try {
+      const db = await MySQLDatabase.getInstance();
+      const connection = await db.getConnection();
+      try {
+        await connection.query(
+          `UPDATE ${this.tableName} 
+             SET google_id = ?, name = ?, phone_number = ?, is_confirmed = 0, is_active = 2 
+           WHERE user_id = ?`,
+          [updates.google_id, updates.name ?? 'Usuario Baneado', updates.phone_number ?? null, user_id],
+        );
+      } finally {
+        connection.release();
+      }
+    } catch (error) {
+      console.error('Error al banear usuario:', error);
+      throw new DatabaseError('Error al banear usuario');
     }
   }
 }

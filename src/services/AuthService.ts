@@ -2,7 +2,7 @@ import jwt from 'jsonwebtoken';
 import { ACCESS_RULES, GOOGLE_OAUTH_CONFIG, JWT_CONFIG } from '../config';
 import UserModel from '../models/UserModel';
 import { UpdateUserInput } from '../schemas/authSchemas';
-import { UnauthorizedError, NotFoundError, ConflictError } from '../utils/errors';
+import { UnauthorizedError, NotFoundError, ConflictError, ForbiddenError } from '../utils/errors';
 import { OAuth2Client } from 'google-auth-library';
 
 export interface TokenPair {
@@ -16,6 +16,7 @@ export interface UserInfo {
   name: string;
   phone_number?: string;
   role: 'user' | 'admin';
+  is_active: number;
 }
 
 export class AuthService {
@@ -96,6 +97,13 @@ export class AuthService {
       throw new UnauthorizedError('No se pudo crear o recuperar el usuario');
     }
 
+    if (user.is_active !== 1) {
+      if (user.is_active === 2) {
+        throw new ForbiddenError('El usuario se encuentra baneado');
+      }
+      throw new ForbiddenError('El usuario no est\u00e1 activo');
+    }
+
     const tokensPair = this.generateTokens(user.user_id, isAdmin ? 'admin' : user.role);
 
     const userInfo: UserInfo = {
@@ -104,6 +112,7 @@ export class AuthService {
       name: user.name,
       phone_number: user.phone_number,
       role: isAdmin ? 'admin' : user.role,
+      is_active: user.is_active,
     };
 
     return { tokens: tokensPair, user: userInfo };
@@ -123,7 +132,7 @@ export class AuthService {
       } as jwt.SignOptions);
 
       return accessToken;
-    } catch (error) {
+    } catch {
       throw new UnauthorizedError('Refresh token inválido');
     }
   }
@@ -141,6 +150,7 @@ export class AuthService {
       name: user.name,
       phone_number: user.phone_number,
       role: user.role,
+      is_active: user.is_active,
     };
   }
 

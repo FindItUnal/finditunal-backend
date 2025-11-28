@@ -81,7 +81,7 @@ CREATE TABLE reports (
   location_id INT UNSIGNED NOT NULL,
   title VARCHAR(255) NOT NULL,
   description TEXT,
-  status ENUM('perdido','encontrado')
+  status ENUM('perdido','encontrado','entregado')
          NOT NULL DEFAULT 'perdido',
   date_lost_or_found DATE NULL,
   contact_method VARCHAR(255) NULL,

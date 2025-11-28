@@ -119,7 +119,10 @@ export const createApp = async ({ models }: { models: Models }): Promise<express
     app.use('/auth', createAuthRouter(new models.userModel()));
 
     app.use('/user', createReportRouter(new models.reportModel(), new models.imageModel()));
-    app.use('/user', createComplaintRouter(new models.complaintModel(), new models.reportModel()));
+    app.use(
+      '/user',
+      createComplaintRouter(new models.complaintModel(), new models.reportModel(), new models.imageModel()),
+    );
 
     app.use('/user', createUserRouter(new models.userModel()));
 

@@ -144,7 +144,7 @@ const options: swaggerJsdoc.Options = {
             },
             status: {
               type: 'string',
-              enum: ['perdido', 'encontrado'],
+              enum: ['perdido', 'encontrado', 'entregado'],
               description: 'Estado del reporte',
               example: 'encontrado',
             },
@@ -200,7 +200,7 @@ const options: swaggerJsdoc.Options = {
             },
             status: {
               type: 'string',
-              enum: ['perdido', 'encontrado'],
+              enum: ['perdido', 'encontrado', 'entregado'],
               description: 'Estado del reporte',
               example: 'encontrado',
             },
@@ -249,7 +249,7 @@ const options: swaggerJsdoc.Options = {
             },
             status: {
               type: 'string',
-              enum: ['perdido', 'encontrado'],
+              enum: ['perdido', 'encontrado', 'entregado'],
               description: 'Estado del reporte',
               example: 'encontrado',
             },
@@ -401,7 +401,7 @@ const options: swaggerJsdoc.Options = {
             },
             status: {
               type: 'string',
-              enum: ['perdido', 'encontrado'],
+              enum: ['perdido', 'encontrado', 'entregado'],
               description: 'Estado del objeto',
               example: 'encontrado',
             },

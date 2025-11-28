@@ -7,7 +7,7 @@ export interface ObjectSearchParams {
   startDate?: string;
   endDate?: string;
   keyword?: string;
-  status?: 'perdido' | 'encontrado';
+  status?: 'perdido' | 'encontrado' | 'entregado';
   limit?: number;
   offset?: number;
 }

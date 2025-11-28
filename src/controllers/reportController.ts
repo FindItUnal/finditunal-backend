@@ -36,8 +36,9 @@ export class ReportController {
     try {
       const userId = req.params.user_id;
       const reportId = parseInt(req.params.report_id, 10);
+      const isAdmin = (req as any).user?.role === 'admin';
 
-      await this.reportService.updateReport(reportId, userId, req.body);
+      await this.reportService.updateReport(reportId, userId, req.body, { isAdmin });
 
       sendSuccess(res, { message: 'Reporte actualizado exitosamente' });
     } catch (error) {
@@ -50,8 +51,9 @@ export class ReportController {
     try {
       const userId = req.params.user_id;
       const reportId = parseInt(req.params.report_id, 10);
+      const isAdmin = (req as any).user?.role === 'admin';
 
-      await this.reportService.deleteReport(reportId, userId);
+      await this.reportService.deleteReport(reportId, userId, { isAdmin });
 
       sendSuccess(res, { message: 'Reporte eliminado exitosamente' });
     } catch (error) {

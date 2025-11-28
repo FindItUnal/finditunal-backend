@@ -119,8 +119,8 @@ export const createObjectRouter = (objectModel: ObjectModel): Router => {
    *       - Por ubicación (nombre exacto)
    *       - Por rango de fechas (startDate y endDate)
    *       - Por palabras clave (busca en título y descripción)
-   *       - Por estado (perdido/encontrado)
-   *       
+   *       - Por estado (perdido/encontrado/entregado)
+   *
    *       Los filtros se pueden combinar y se aplican con lógica AND. El user_id en la URL debe coincidir con el del token JWT.
    *     tags: [Objects]
    *     security:
@@ -149,7 +149,7 @@ export const createObjectRouter = (objectModel: ObjectModel): Router => {
    *         name: status
    *         schema:
    *           type: string
-   *           enum: [perdido, encontrado]
+   *           enum: [perdido, encontrado, entregado]
    *         description: Estado del objeto
    *         example: 'encontrado'
    *       - in: query

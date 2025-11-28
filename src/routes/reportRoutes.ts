@@ -63,7 +63,7 @@ export const createReportRouter = (reportModel: ReportModel, imageModel: ImageMo
    *                 example: 'Billetera negra con documentos de identidad'
    *               status:
    *                 type: string
-   *                 enum: [perdido, encontrado]
+   *                 enum: [perdido, encontrado, entregado]
    *                 description: Estado del reporte
    *                 example: 'encontrado'
    *               date_lost_or_found:

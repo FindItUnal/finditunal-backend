@@ -30,5 +30,13 @@ export const updateComplaintStatusSchema = z
     path: ['status'],
   });
 
+export const complaintAdminActionSchema = z.object({
+  admin_notes: z
+    .string()
+    .trim()
+    .min(5, 'Las notas deben tener al menos 5 caracteres')
+    .max(2000, 'Las notas no pueden superar 2000 caracteres'),
+});
+
 export type CreateComplaintInput = z.infer<typeof createComplaintSchema>;
 export type UpdateComplaintStatusInput = z.infer<typeof updateComplaintStatusSchema>;

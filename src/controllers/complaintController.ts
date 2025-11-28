@@ -69,8 +69,7 @@ export class ComplaintController {
         typeof req.query.report_id === 'string' && req.query.report_id.trim() !== ''
           ? Number(req.query.report_id)
           : undefined;
-      const reportId =
-        reportIdParam !== undefined && !Number.isNaN(reportIdParam) ? reportIdParam : undefined;
+      const reportId = reportIdParam !== undefined && !Number.isNaN(reportIdParam) ? reportIdParam : undefined;
 
       const complaints = await this.complaintService.getComplaintsForAdmin({
         status: statusFilter,
@@ -116,6 +115,48 @@ export class ComplaintController {
 
       await this.complaintService.updateComplaintStatus(complaintId, adminUserId, req.body);
       sendSuccess(res, { message: 'Denuncia actualizada exitosamente' });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  discardComplaint = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const adminUserId = (req as any).user?.user_id as string | undefined;
+      if (!adminUserId) {
+        res.status(401).json({ message: 'Usuario no autenticado' });
+        return;
+      }
+
+      const complaintId = Number(req.params.complaint_id);
+      if (Number.isNaN(complaintId)) {
+        res.status(400).json({ message: 'complaint_id inv\u00e1lido' });
+        return;
+      }
+
+      await this.complaintService.discardComplaint(complaintId, adminUserId, req.body.admin_notes);
+      sendSuccess(res, { message: 'Denuncia descartada exitosamente' });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  resolveComplaint = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const adminUserId = (req as any).user?.user_id as string | undefined;
+      if (!adminUserId) {
+        res.status(401).json({ message: 'Usuario no autenticado' });
+        return;
+      }
+
+      const complaintId = Number(req.params.complaint_id);
+      if (Number.isNaN(complaintId)) {
+        res.status(400).json({ message: 'complaint_id inv\u00e1lido' });
+        return;
+      }
+
+      await this.complaintService.resolveComplaintAndDeleteReport(complaintId, adminUserId, req.body.admin_notes);
+      sendSuccess(res, { message: 'Denuncia resuelta y reporte eliminado' });
     } catch (error) {
       next(error);
     }

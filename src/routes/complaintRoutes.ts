@@ -2,15 +2,24 @@ import { Router } from 'express';
 import { ComplaintController } from '../controllers/complaintController';
 import ComplaintModel from '../models/ComplaintModel';
 import ReportModel from '../models/ReportModel';
+import ImageModel from '../models/ImageModel';
 import { ComplaintService } from '../services/ComplaintService';
 import { authenticate } from '../middlewares/authMiddleware';
 import { authorizeAdmin } from '../middlewares/roleMiddleware';
 import { validate } from '../middlewares/validationMiddleware';
-import { createComplaintSchema, updateComplaintStatusSchema } from '../schemas/complaintSchemas';
+import {
+  createComplaintSchema,
+  updateComplaintStatusSchema,
+  complaintAdminActionSchema,
+} from '../schemas/complaintSchemas';
 
-export const createComplaintRouter = (complaintModel: ComplaintModel, reportModel: ReportModel): Router => {
+export const createComplaintRouter = (
+  complaintModel: ComplaintModel,
+  reportModel: ReportModel,
+  imageModel: ImageModel,
+): Router => {
   const complaintRouter = Router();
-  const complaintService = new ComplaintService(complaintModel, reportModel);
+  const complaintService = new ComplaintService(complaintModel, reportModel, imageModel);
   const complaintController = new ComplaintController(complaintService);
 
   /**
@@ -194,6 +203,88 @@ export const createComplaintRouter = (complaintModel: ComplaintModel, reportMode
     authorizeAdmin,
     validate(updateComplaintStatusSchema),
     complaintController.updateComplaintStatus,
+  );
+
+  /**
+   * @swagger
+   * /user/admin/complaints/{complaint_id}/discard:
+   *   patch:
+   *     summary: Descartar una denuncia
+   *     description: Marca la denuncia como revisada sin eliminar el reporte asociado.
+   *     tags: [Complaints]
+   *     security:
+   *       - cookieAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: complaint_id
+   *         required: true
+   *         schema:
+   *           type: integer
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             $ref: '#/components/schemas/UpdateComplaint'
+   *           example:
+   *             admin_notes: 'No se encontraron problemas en el reporte'
+   *     responses:
+   *       200:
+   *         description: Denuncia descartada exitosamente.
+   *       401:
+   *         $ref: '#/components/responses/UnauthorizedError'
+   *       403:
+   *         $ref: '#/components/responses/ForbiddenError'
+   *       404:
+   *         $ref: '#/components/responses/NotFoundError'
+   */
+  complaintRouter.patch(
+    '/admin/complaints/:complaint_id/discard',
+    authenticate,
+    authorizeAdmin,
+    validate(complaintAdminActionSchema),
+    complaintController.discardComplaint,
+  );
+
+  /**
+   * @swagger
+   * /user/admin/complaints/{complaint_id}/resolve:
+   *   patch:
+   *     summary: Resolver una denuncia eliminando el reporte
+   *     description: Marca la denuncia como resuelta y elimina el reporte denunciado.
+   *     tags: [Complaints]
+   *     security:
+   *       - cookieAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: complaint_id
+   *         required: true
+   *         schema:
+   *           type: integer
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             $ref: '#/components/schemas/UpdateComplaint'
+   *           example:
+   *             admin_notes: 'Reporte eliminado por contener informacion fraudulenta'
+   *     responses:
+   *       200:
+   *         description: Denuncia resuelta y reporte eliminado.
+   *       401:
+   *         $ref: '#/components/responses/UnauthorizedError'
+   *       403:
+   *         $ref: '#/components/responses/ForbiddenError'
+   *       404:
+   *         $ref: '#/components/responses/NotFoundError'
+   */
+  complaintRouter.patch(
+    '/admin/complaints/:complaint_id/resolve',
+    authenticate,
+    authorizeAdmin,
+    validate(complaintAdminActionSchema),
+    complaintController.resolveComplaint,
   );
 
   /**
