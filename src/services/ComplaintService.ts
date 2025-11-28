@@ -111,7 +111,7 @@ export class ComplaintService {
       throw new NotFoundError('Reporte asociado no encontrado');
     }
 
-    const imageRecord = await this.imageModel.getImageByReportId(report.report_id);
+    const images = await this.imageModel.getImagesByReportId(report.report_id);
 
     await this.complaintModel.updateComplaint(complaintId, {
       status: 'resolved',
@@ -120,9 +120,7 @@ export class ComplaintService {
       resolved_at: new Date(),
     });
 
-    if (imageRecord) {
-      deleteImage(imageRecord.image_url);
-    }
+    images.forEach((image) => deleteImage(image.image_url));
 
     await this.reportModel.deleteReport(report.report_id);
   }

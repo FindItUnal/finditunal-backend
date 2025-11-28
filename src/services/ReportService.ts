@@ -25,7 +25,7 @@ export class ReportService {
   ) {}
 
   // Crear un nuevo reporte
-  async createReport(userId: string, reportData: CreateReportInput, imageFilename?: string): Promise<number> {
+  async createReport(userId: string, reportData: CreateReportInput, imageFilenames: string[] = []): Promise<number> {
     try {
       const report = {
         ...reportData,
@@ -34,17 +34,15 @@ export class ReportService {
 
       const result = await this.reportModel.createReport(report);
 
-      // Guardar la imagen si se subió una
-      if (imageFilename && result.insertId) {
-        await this.imageModel.saveImage(imageFilename, result.insertId);
+      if (result.insertId && imageFilenames.length) {
+        for (const filename of imageFilenames) {
+          await this.imageModel.saveImage(filename, result.insertId);
+        }
       }
 
       return result.insertId;
     } catch (error) {
-      // Si hay error y se subió una imagen, eliminarla
-      if (imageFilename) {
-        deleteImage(imageFilename);
-      }
+      imageFilenames.forEach((filename) => deleteImage(filename));
       throw error;
     }
   }
@@ -100,20 +98,16 @@ export class ReportService {
 
   // Eliminar un reporte
   async deleteReport(reportId: number, userId: string, options?: { isAdmin?: boolean }): Promise<void> {
-    // Verificar que el reporte existe y pertenece al usuario (o admin)
     await this.verifyReportOwnership(reportId, userId, options);
 
     try {
-      // Obtener la imagen asociada antes de eliminar
-      const imageRecord = await this.imageModel.getImageByReportId(reportId);
+      const images = await this.imageModel.getImagesByReportId(reportId);
 
-      // Eliminar el reporte (esto también debería eliminar la imagen por FK CASCADE si está configurado)
       await this.reportModel.deleteReport(reportId);
 
-      // Eliminar la imagen del sistema de archivos si existe
-      if (imageRecord) {
-        deleteImage(imageRecord.image_url);
-      }
+      images.forEach((image) => {
+        deleteImage(image.image_url);
+      });
     } catch (error) {
       console.error('Error al eliminar reporte:', error);
       throw error;

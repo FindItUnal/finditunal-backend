@@ -9,9 +9,11 @@ export class ReportController {
   createReport = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const userId = req.params.user_id;
-      const uploadedFile = req.file?.filename;
+      const uploadedFiles = Array.isArray(req.files)
+        ? (req.files as Express.Multer.File[]).map((file) => file.filename)
+        : [];
 
-      await this.reportService.createReport(userId, req.body, uploadedFile);
+      await this.reportService.createReport(userId, req.body, uploadedFiles);
 
       sendSuccess(res, { message: 'Reporte creado exitosamente' }, 201);
     } catch (error) {

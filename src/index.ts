@@ -14,6 +14,7 @@ import { createCategoryRouter } from './routes/CategoryRoutes';
 import { createObjectRouter } from './routes/objectRoutes';
 import { createImageRouter } from './routes/imageRoutes';
 import { createComplaintRouter } from './routes/complaintRoutes';
+import { UPLOADS_BASE_PATH } from './middlewares/multerMiddleware';
 // import 'dotenv/config'
 
 export const createApp = async ({ models }: { models: Models }): Promise<express.Application> => {
@@ -39,6 +40,9 @@ export const createApp = async ({ models }: { models: Models }): Promise<express
         },
       }),
     );
+
+    // Servir archivos estáticos de uploads
+    app.use('/uploads', express.static(UPLOADS_BASE_PATH));
 
     // Servir especificación JSON
     app.get('/swagger.json', (_req, res) => {

@@ -18,7 +18,7 @@ export const createReportRouter = (reportModel: ReportModel, imageModel: ImageMo
    * /user/{user_id}/reports:
    *   post:
    *     summary: Crear un nuevo reporte
-   *     description: Crea un nuevo reporte de objeto perdido o encontrado. Incluye la opción de subir una imagen del objeto. El user_id en la URL debe coincidir con el del token JWT.
+   *     description: Crea un nuevo reporte de objeto perdido o encontrado. Permite subir entre 0 y 4 imagenes del objeto. El user_id en la URL debe coincidir con el del token JWT.
    *     tags: [Reports]
    *     security:
    *       - cookieAuth: []
@@ -76,12 +76,15 @@ export const createReportRouter = (reportModel: ReportModel, imageModel: ImageMo
    *                 minLength: 1
    *                 description: Método de contacto
    *                 example: 'email: usuario@unal.edu.co'
-   *               image:
-   *                 type: string
-   *                 format: binary
-   *                 description: Imagen del objeto (opcional)
+   *               images:
+   *                 type: array
+   *                 maxItems: 4
+   *                 description: Imagenes del objeto (opcional, maximo 4)
+   *                 items:
+   *                   type: string
+   *                   format: binary
    *           encoding:
-   *             image:
+   *             images:
    *               contentType: image/jpeg, image/png, image/jpg
    *     responses:
    *       201:
@@ -105,7 +108,7 @@ export const createReportRouter = (reportModel: ReportModel, imageModel: ImageMo
   reportRouter.post(
     '/:user_id/reports',
     authenticate,
-    upload.single('image'),
+    upload.array('images', 4),
     validate(reportSchema),
     reportController.createReport,
   );

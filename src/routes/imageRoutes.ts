@@ -1,10 +1,11 @@
 import { Router } from 'express';
 import { ImageController } from '../controllers/imageController';
 import { authenticate } from '../middlewares/authMiddleware';
+import ImageModel from '../models/ImageModel';
 
 export const createImageRouter = (): Router => {
   const imageRouter = Router();
-  const imageController = new ImageController();
+  const imageController = new ImageController(new ImageModel());
 
   /**
    * @swagger
@@ -63,6 +64,56 @@ export const createImageRouter = (): Router => {
    */
   // Obtener todas las ubicaciones
   imageRouter.get('/:user_id/images/:filename', authenticate, imageController.sendImage);
+
+  /**
+   * @swagger
+   * /user/{user_id}/reports/{report_id}/images:
+   *   get:
+   *     summary: Listar imágenes de un reporte
+   *     description: Devuelve todas las imágenes asociadas a un reporte específico.
+   *     tags: [Images]
+   *     security:
+   *       - cookieAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: user_id
+   *         required: true
+   *         schema:
+   *           type: string
+   *         description: ID del usuario autenticado
+   *       - in: path
+   *         name: report_id
+   *         required: true
+   *         schema:
+   *           type: integer
+   *         description: ID del reporte
+   *     responses:
+   *       200:
+   *         description: Lista de imágenes del reporte
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 report_id:
+   *                   type: integer
+   *                 images:
+   *                   type: array
+   *                   items:
+   *                     type: object
+   *                     properties:
+   *                       filename:
+   *                         type: string
+   *                       url:
+   *                         type: string
+   *       401:
+   *         $ref: '#/components/responses/UnauthorizedError'
+   *       403:
+   *         $ref: '#/components/responses/ForbiddenError'
+   *       404:
+   *         $ref: '#/components/responses/NotFoundError'
+   */
+  imageRouter.get('/:user_id/reports/:report_id/images', authenticate, imageController.listImagesByReport);
 
   return imageRouter;
 };

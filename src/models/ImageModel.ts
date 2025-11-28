@@ -23,15 +23,16 @@ class ImageModel {
     }
   }
 
-  async getImageByReportId(report_id: number): Promise<Image | null> {
+  async getImagesByReportId(report_id: number): Promise<Image[]> {
     try {
       const db = await MySQLDatabase.getInstance();
       const connection = await db.getConnection();
       try {
-        const [rows] = await connection.query<RowDataPacket[]>('SELECT image_url FROM images WHERE report_id = ?', [
-          report_id,
-        ]);
-        return (rows[0] as Image) || null;
+        const [rows] = await connection.query<RowDataPacket[]>(
+          'SELECT image_url FROM images WHERE report_id = ? ORDER BY image_id',
+          [report_id],
+        );
+        return rows as Image[];
       } finally {
         connection.release();
       }
