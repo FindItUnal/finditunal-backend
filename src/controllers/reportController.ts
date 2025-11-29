@@ -39,8 +39,11 @@ export class ReportController {
       const userId = req.params.user_id;
       const reportId = parseInt(req.params.report_id, 10);
       const isAdmin = (req as any).user?.role === 'admin';
+      const uploadedFiles = Array.isArray(req.files)
+        ? (req.files as Express.Multer.File[]).map((file) => file.filename)
+        : [];
 
-      await this.reportService.updateReport(reportId, userId, req.body, { isAdmin });
+      await this.reportService.updateReport(reportId, userId, req.body, { isAdmin }, uploadedFiles);
 
       sendSuccess(res, { message: 'Reporte actualizado exitosamente' });
     } catch (error) {

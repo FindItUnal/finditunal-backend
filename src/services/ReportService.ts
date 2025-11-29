@@ -83,6 +83,7 @@ export class ReportService {
     userId: string,
     updateData: UpdateReportInput,
     options?: { isAdmin?: boolean },
+    newImageFilenames: string[] = [],
   ): Promise<void> {
     // Verificar que el reporte existe y pertenece al usuario (o admin)
     await this.verifyReportOwnership(reportId, userId, options);
@@ -94,6 +95,16 @@ export class ReportService {
     };
 
     await this.reportModel.updateReport(reportId, dataToUpdate);
+
+    if (newImageFilenames.length) {
+      const existingImages = await this.imageModel.getImagesByReportId(reportId);
+      existingImages.forEach((image) => deleteImage(image.image_url));
+      await this.imageModel.deleteImageByReportId(reportId);
+
+      for (const filename of newImageFilenames) {
+        await this.imageModel.saveImage(filename, reportId);
+      }
+    }
   }
 
   // Eliminar un reporte

@@ -166,7 +166,7 @@ export const createReportRouter = (reportModel: ReportModel, imageModel: ImageMo
    * /user/{user_id}/reports/{report_id}:
    *   patch:
    *     summary: Actualizar un reporte
-   *     description: Actualiza un reporte existente. Solo se pueden actualizar los campos especificados en el body. El user_id en la URL debe coincidir con el del token JWT y ser el propietario del reporte.
+   *     description: Actualiza un reporte existente. Solo se pueden actualizar los campos especificados en el body. El user_id en la URL debe coincidir con el del token JWT y ser el propietario del reporte. Permite reemplazar las imágenes del reporte (máximo 4 archivos).
    *     tags: [Reports]
    *     security:
    *       - cookieAuth: []
@@ -188,13 +188,26 @@ export const createReportRouter = (reportModel: ReportModel, imageModel: ImageMo
    *     requestBody:
    *       required: true
    *       content:
-   *         application/json:
+   *         multipart/form-data:
    *           schema:
-   *             $ref: '#/components/schemas/UpdateReport'
-   *           example:
-   *             title: 'Billetera encontrada en biblioteca (actualizado)'
-   *             description: 'Billetera negra con documentos de identidad y tarjeta de crédito'
-   *             status: 'encontrado'
+   *             type: object
+   *             properties:
+   *               title:
+   *                 type: string
+   *               description:
+   *                 type: string
+   *               status:
+   *                 type: string
+   *                 enum: [perdido, encontrado, entregado]
+   *               images:
+   *                 type: array
+   *                 maxItems: 4
+   *                 items:
+   *                   type: string
+   *                   format: binary
+   *           encoding:
+   *             images:
+   *               contentType: image/jpeg, image/png, image/jpg
    *     responses:
    *       200:
    *         description: Reporte actualizado exitosamente
@@ -219,6 +232,7 @@ export const createReportRouter = (reportModel: ReportModel, imageModel: ImageMo
   reportRouter.patch(
     '/:user_id/reports/:report_id',
     authenticate,
+    upload.array('images', 4),
     validate(reportSchema.partial()),
     reportController.updateReport,
   );
