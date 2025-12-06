@@ -8,6 +8,8 @@ import ImageModel from './models/ImageModel';
 import ComplaintModel from './models/ComplaintModel';
 import ConversationModel from './models/ConversationModel';
 import MessageModel from './models/MessageModel';
+import ActivityLogModel from './models/ActivityLogModel';
+import NotificationModel from './models/NotificationModel';
 
 createApp({
   models: {
@@ -20,5 +22,7 @@ createApp({
     complaintModel: ComplaintModel,
     conversationModel: ConversationModel,
     messageModel: MessageModel,
+    activityLogModel: ActivityLogModel,
+    notificationModel: NotificationModel,
   },
 });

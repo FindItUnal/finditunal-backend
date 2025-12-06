@@ -213,9 +213,7 @@ class UserModel {
       const db = await MySQLDatabase.getInstance();
       const connection = await db.getConnection();
       try {
-        const [rows] = await connection.query<RowDataPacket[]>(
-          `SELECT COUNT(*) AS total_users FROM ${this.tableName}`,
-        );
+        const [rows] = await connection.query<RowDataPacket[]>(`SELECT COUNT(*) AS total_users FROM ${this.tableName}`);
         return Number(rows[0]?.total_users ?? 0);
       } finally {
         connection.release();

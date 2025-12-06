@@ -7,6 +7,8 @@ import ImageModel from './models/ImageModel';
 import ComplaintModel from './models/ComplaintModel';
 import ConversationModel from './models/ConversationModel';
 import MessageModel from './models/MessageModel';
+import ActivityLogModel from './models/ActivityLogModel';
+import NotificationModel from './models/NotificationModel';
 
 export interface Models {
   userModel: typeof UserModel;
@@ -18,4 +20,6 @@ export interface Models {
   complaintModel: typeof ComplaintModel;
   conversationModel: typeof ConversationModel;
   messageModel: typeof MessageModel;
+  activityLogModel: typeof ActivityLogModel;
+  notificationModel: typeof NotificationModel;
 }

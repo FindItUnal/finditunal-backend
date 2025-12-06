@@ -54,7 +54,7 @@ class ConversationModel {
     report_id: number;
     owner_id: string;
     participant_id: string;
-  }): Promise<ConversationRecord> {
+  }): Promise<{ conversation: ConversationRecord; created: boolean }> {
     const { report_id, owner_id, participant_id } = params;
 
     try {
@@ -71,7 +71,7 @@ class ConversationModel {
         );
 
         if (existingRows.length > 0) {
-          return existingRows[0] as ConversationRecord;
+          return { conversation: existingRows[0] as ConversationRecord, created: false };
         }
 
         const [result] = await connection.query<ResultSetHeader>(
@@ -89,7 +89,7 @@ class ConversationModel {
           [insertResult.insertId],
         );
 
-        return rows[0] as ConversationRecord;
+        return { conversation: rows[0] as ConversationRecord, created: true };
       } finally {
         connection.release();
       }
@@ -105,7 +105,7 @@ class ConversationModel {
               [params.report_id, params.owner_id, params.participant_id],
             );
             if (rows.length > 0) {
-              return rows[0] as ConversationRecord;
+              return { conversation: rows[0] as ConversationRecord, created: false };
             }
           } finally {
             connection.release();

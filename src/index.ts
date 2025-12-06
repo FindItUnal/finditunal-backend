@@ -19,9 +19,11 @@ import { createImageRouter } from './routes/imageRoutes';
 import { createComplaintRouter } from './routes/complaintRoutes';
 import { createChatRouter } from './routes/chatRoutes';
 import { createActivityLogRouter } from './routes/activityLogRoutes';
+import { createNotificationRouter } from './routes/notificationRoutes';
 import { UPLOADS_BASE_PATH } from './middlewares/multerMiddleware';
 import { APP_CONFIG, JWT_CONFIG } from './config';
 import { ChatService } from './services/ChatService';
+import { NotificationService } from './services/NotificationService';
 // import 'dotenv/config'
 
 interface SocketUserPayload {
@@ -161,7 +163,10 @@ export const createApp = async ({
     );
 
     // Activity log (admin)
-    app.use('/user', createActivityLogRouter(new (require('./models/ActivityLogModel').default)()));
+    app.use('/user', createActivityLogRouter(new models.activityLogModel()));
+
+    // Notificaciones de usuario
+    app.use('/user', createNotificationRouter(new models.notificationModel()));
 
     // Middleware de manejo de errores (debe ir al final)
     app.use(errorHandler);
@@ -176,6 +181,8 @@ export const createApp = async ({
         credentials: true,
       },
     });
+
+    NotificationService.setSocketServer(io);
 
     const chatService = new ChatService(
       new models.conversationModel(),

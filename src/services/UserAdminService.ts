@@ -134,13 +134,10 @@ export class UserAdminService {
     const recoveryRateCurrentMonth =
       reportsCurrentMonth > 0 ? Math.round((deliveredCurrentMonth / reportsCurrentMonth) * 100) : 0;
 
-    const activeUsersPercentage =
-      totalUsers > 0 ? Math.round((activeUsers / totalUsers) * 100) : 0;
+    const activeUsersPercentage = totalUsers > 0 ? Math.round((activeUsers / totalUsers) * 100) : 0;
 
     const resolvedComplaintsPercentageCurrentMonth =
-      complaintsCurrentMonth > 0
-        ? Math.round((complaintsResolvedCurrentMonth / complaintsCurrentMonth) * 100)
-        : 0;
+      complaintsCurrentMonth > 0 ? Math.round((complaintsResolvedCurrentMonth / complaintsCurrentMonth) * 100) : 0;
 
     return {
       total_users: totalUsers,

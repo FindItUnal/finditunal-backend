@@ -41,4 +41,3 @@ export class ActivityLogService {
     return { items, total, limit, offset };
   }
 }
-

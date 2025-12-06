@@ -116,6 +116,86 @@ const options: swaggerJsdoc.Options = {
             },
           },
         },
+        Notification: {
+          type: 'object',
+          properties: {
+            notification_id: {
+              type: 'integer',
+              description: 'ID unico de la notificacion',
+              example: 1,
+            },
+            user_id: {
+              type: 'string',
+              description: 'ID del usuario destinatario',
+              example: 'user1234',
+            },
+            type: {
+              type: 'string',
+              enum: ['system', 'report', 'complaint', 'message'],
+              description: 'Tipo de notificacion',
+              example: 'message',
+            },
+            title: {
+              type: 'string',
+              description: 'Titulo de la notificacion',
+              example: 'Nuevo mensaje recibido',
+            },
+            message: {
+              type: 'string',
+              nullable: true,
+              description: 'Contenido descriptivo de la notificacion',
+              example: 'Tienes un nuevo mensaje sobre tu publicacion iPhone 13 Pro.',
+            },
+            related_id: {
+              type: 'integer',
+              nullable: true,
+              description: 'ID relacionado (por ejemplo, reporte, denuncia o conversacion)',
+              example: 42,
+            },
+            is_read: {
+              type: 'boolean',
+              description: 'Indica si la notificacion ya fue leida',
+              example: false,
+            },
+            created_at: {
+              type: 'string',
+              format: 'date-time',
+              description: 'Fecha en que se creo la notificacion',
+              example: '2024-02-10T12:00:00Z',
+            },
+          },
+        },
+        NotificationPage: {
+          type: 'object',
+          properties: {
+            items: {
+              type: 'array',
+              items: {
+                $ref: '#/components/schemas/Notification',
+              },
+            },
+            total: {
+              type: 'integer',
+              description: 'Total de notificaciones en el conjunto consultado',
+              example: 25,
+            },
+            unread_count: {
+              type: 'integer',
+              description: 'Numero total de notificaciones no leidas del usuario',
+              example: 5,
+            },
+            limit: {
+              type: 'integer',
+              description: 'Limite aplicado en la consulta',
+              example: 20,
+            },
+            offset: {
+              type: 'integer',
+              description: 'Desplazamiento aplicado en la consulta',
+              example: 0,
+            },
+          },
+        },
         AdminDashboardStats: {
           type: 'object',
           properties: {
@@ -891,6 +971,10 @@ const options: swaggerJsdoc.Options = {
       {
         name: 'Complaints',
         description: 'Endpoints para denuncias de publicaciones',
+      },
+      {
+        name: 'Notifications',
+        description: 'Endpoints para notificaciones de usuarios',
       },
       {
         name: 'Activity',

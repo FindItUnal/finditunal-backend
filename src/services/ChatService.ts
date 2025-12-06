@@ -2,6 +2,8 @@ import ConversationModel, { ConversationRecord, ConversationSummary } from '../m
 import MessageModel, { MessageRecord } from '../models/MessageModel';
 import ReportModel from '../models/ReportModel';
 import { ForbiddenError, NotFoundError } from '../utils/errors';
+import NotificationModel from '../models/NotificationModel';
+import { NotificationService } from './NotificationService';
 
 export interface SendMessageResult {
   message: MessageRecord;
@@ -10,11 +12,15 @@ export interface SendMessageResult {
 }
 
 export class ChatService {
+  private notificationService: NotificationService;
+
   constructor(
     private conversationModel: ConversationModel,
     private messageModel: MessageModel,
     private reportModel: ReportModel,
-  ) {}
+  ) {
+    this.notificationService = new NotificationService(new NotificationModel());
+  }
 
   async createOrGetConversation(reportId: number, currentUserId: string): Promise<ConversationRecord> {
     const report = await this.reportModel.getReportById(reportId);
@@ -27,11 +33,22 @@ export class ChatService {
       throw new ForbiddenError('No puedes iniciar una conversacion contigo mismo');
     }
 
-    const conversation = await this.conversationModel.findOrCreateByReportAndUsers({
+    const { conversation, created } = await this.conversationModel.findOrCreateByReportAndUsers({
       report_id: reportId,
       owner_id: ownerId,
       participant_id: currentUserId,
     });
+
+    if (created) {
+      const previewTitle = report.title.length > 80 ? `${report.title.slice(0, 77)}...` : report.title;
+      await this.notificationService.notifyUser({
+        user_id: ownerId,
+        type: 'message',
+        title: 'Nueva conversacion sobre tu publicacion',
+        message: `Un usuario quiere contactarte sobre "${previewTitle}"`,
+        related_id: conversation.conversation_id,
+      });
+    }
 
     return conversation;
   }
@@ -66,6 +83,16 @@ export class ChatService {
     await this.conversationModel.touchConversation(conversationId);
 
     const recipientUserId = conversation.user1_id === userId ? conversation.user2_id : conversation.user1_id;
+
+    const preview = messageText.length > 120 ? `${messageText.slice(0, 117)}...` : messageText;
+
+    await this.notificationService.notifyUser({
+      user_id: recipientUserId,
+      type: 'message',
+      title: 'Nuevo mensaje recibido',
+      message: preview,
+      related_id: conversationId,
+    });
 
     return {
       message,

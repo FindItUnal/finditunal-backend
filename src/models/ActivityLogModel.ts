@@ -81,8 +81,7 @@ class ActivityLogModel {
           let metadata: any = null;
           if (row.metadata !== undefined && row.metadata !== null) {
             try {
-              metadata =
-                typeof row.metadata === 'string' ? JSON.parse(row.metadata as string) : (row.metadata as any);
+              metadata = typeof row.metadata === 'string' ? JSON.parse(row.metadata as string) : (row.metadata as any);
             } catch {
               metadata = null;
             }
@@ -114,9 +113,7 @@ class ActivityLogModel {
       const db = await MySQLDatabase.getInstance();
       const connection = await db.getConnection();
       try {
-        const [rows] = await connection.query<RowDataPacket[]>(
-          `SELECT COUNT(*) AS total FROM ${this.tableName}`,
-        );
+        const [rows] = await connection.query<RowDataPacket[]>(`SELECT COUNT(*) AS total FROM ${this.tableName}`);
         const row = rows[0] as RowDataPacket;
         return Number(row.total ?? 0);
       } finally {
@@ -130,4 +127,3 @@ class ActivityLogModel {
 }
 
 export default ActivityLogModel;
-
