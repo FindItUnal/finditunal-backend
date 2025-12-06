@@ -3,6 +3,8 @@ import ImageModel from '../models/ImageModel';
 import { CreateReportInput, UpdateReportInput } from '../schemas/reportSchemas';
 import { NotFoundError } from '../utils/errors';
 import { deleteImage } from '../middlewares/multerMiddleware';
+import ActivityLogModel from '../models/ActivityLogModel';
+import { ActivityLogService } from './ActivityLogService';
 
 export interface ReportWithImage {
   report_id: number;
@@ -19,10 +21,14 @@ export interface ReportWithImage {
 }
 
 export class ReportService {
+  private activityLog: ActivityLogService;
+
   constructor(
     private reportModel: ReportModel,
     private imageModel: ImageModel,
-  ) {}
+  ) {
+    this.activityLog = new ActivityLogService(new ActivityLogModel());
+  }
 
   // Crear un nuevo reporte
   async createReport(userId: string, reportData: CreateReportInput, imageFilenames: string[] = []): Promise<number> {
@@ -38,6 +44,23 @@ export class ReportService {
         for (const filename of imageFilenames) {
           await this.imageModel.saveImage(filename, result.insertId);
         }
+      }
+
+      if (result.insertId) {
+        await this.activityLog.logActivity({
+          event_type: 'REPORT_CREATED',
+          actor_user_id: userId,
+          target_type: 'REPORT',
+          target_id: result.insertId,
+          title: `Nuevo objeto publicado: ${report.title}`,
+          description: `El usuario ${userId} publico un nuevo reporte`,
+          metadata: {
+            report_id: result.insertId,
+            status: report.status,
+            category_id: report.category_id,
+            location_id: report.location_id,
+          },
+        });
       }
 
       return result.insertId;
@@ -86,7 +109,7 @@ export class ReportService {
     newImageFilenames: string[] = [],
   ): Promise<void> {
     // Verificar que el reporte existe y pertenece al usuario (o admin)
-    await this.verifyReportOwnership(reportId, userId, options);
+    const existingReport = await this.verifyReportOwnership(reportId, userId, options);
 
     // Transformar la fecha si viene
     const dataToUpdate = {
@@ -105,11 +128,41 @@ export class ReportService {
         await this.imageModel.saveImage(filename, reportId);
       }
     }
+
+    const newStatus = dataToUpdate.status ?? existingReport.status;
+
+    await this.activityLog.logActivity({
+      event_type: 'REPORT_UPDATED',
+      actor_user_id: userId,
+      target_type: 'REPORT',
+      target_id: reportId,
+      title: `Reporte actualizado: ${existingReport.title}`,
+      description: `El usuario ${userId} actualizo el reporte ${reportId}`,
+      metadata: {
+        report_id: reportId,
+        previous_status: existingReport.status,
+        new_status: newStatus,
+      },
+    });
+
+    if (existingReport.status !== 'entregado' && newStatus === 'entregado') {
+      await this.activityLog.logActivity({
+        event_type: 'REPORT_DELIVERED',
+        actor_user_id: userId,
+        target_type: 'REPORT',
+        target_id: reportId,
+        title: `Objeto entregado: ${existingReport.title}`,
+        description: `El reporte ${reportId} ha sido marcado como entregado`,
+        metadata: {
+          report_id: reportId,
+        },
+      });
+    }
   }
 
   // Eliminar un reporte
   async deleteReport(reportId: number, userId: string, options?: { isAdmin?: boolean }): Promise<void> {
-    await this.verifyReportOwnership(reportId, userId, options);
+    const report = await this.verifyReportOwnership(reportId, userId, options);
 
     try {
       const images = await this.imageModel.getImagesByReportId(reportId);
@@ -123,5 +176,17 @@ export class ReportService {
       console.error('Error al eliminar reporte:', error);
       throw error;
     }
+
+    await this.activityLog.logActivity({
+      event_type: 'REPORT_DELETED',
+      actor_user_id: userId,
+      target_type: 'REPORT',
+      target_id: reportId,
+      title: `Reporte eliminado: ${report.title}`,
+      description: `El reporte ${reportId} fue eliminado por el usuario ${userId}`,
+      metadata: {
+        report_id: reportId,
+      },
+    });
   }
 }

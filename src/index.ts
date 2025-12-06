@@ -18,6 +18,7 @@ import { createObjectRouter } from './routes/objectRoutes';
 import { createImageRouter } from './routes/imageRoutes';
 import { createComplaintRouter } from './routes/complaintRoutes';
 import { createChatRouter } from './routes/chatRoutes';
+import { createActivityLogRouter } from './routes/activityLogRoutes';
 import { UPLOADS_BASE_PATH } from './middlewares/multerMiddleware';
 import { APP_CONFIG, JWT_CONFIG } from './config';
 import { ChatService } from './services/ChatService';
@@ -158,6 +159,9 @@ export const createApp = async ({
       '/user',
       createChatRouter(new models.conversationModel(), new models.messageModel(), new models.reportModel()),
     );
+
+    // Activity log (admin)
+    app.use('/user', createActivityLogRouter(new (require('./models/ActivityLogModel').default)()));
 
     // Middleware de manejo de errores (debe ir al final)
     app.use(errorHandler);

@@ -165,6 +165,33 @@ export const createUserRouter = (userModel: UserModel): Router => {
 
   /**
    * @swagger
+   * /user/admin/dashboard-stats:
+   *   get:
+   *     summary: Obtener estadisticas globales para el dashboard admin
+   *     description: |
+   *       Devuelve contadores y porcentajes agregados sobre usuarios, reportes y denuncias
+   *       para mostrar en el panel de administrador (tarjetas de resumen y barras de progreso).
+   *     tags: [Users]
+   *     security:
+   *       - cookieAuth: []
+   *     responses:
+   *       200:
+   *         description: Estadisticas calculadas correctamente.
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/AdminDashboardStats'
+   *       401:
+   *         $ref: '#/components/responses/UnauthorizedError'
+   *       403:
+   *         $ref: '#/components/responses/ForbiddenError'
+   *       500:
+   *         $ref: '#/components/responses/InternalServerError'
+   */
+  userRouter.get('/admin/dashboard-stats', authenticate, authorizeAdmin, userController.getAdminDashboardStats);
+
+  /**
+   * @swagger
    * /user/admin/users/{user_id}:
    *   get:
    *     summary: Obtener detalle de un usuario (admin)

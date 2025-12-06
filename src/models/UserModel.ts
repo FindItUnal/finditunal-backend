@@ -207,6 +207,61 @@ class UserModel {
       throw new DatabaseError('Error al banear usuario');
     }
   }
+
+  async countAllUsers(): Promise<number> {
+    try {
+      const db = await MySQLDatabase.getInstance();
+      const connection = await db.getConnection();
+      try {
+        const [rows] = await connection.query<RowDataPacket[]>(
+          `SELECT COUNT(*) AS total_users FROM ${this.tableName}`,
+        );
+        return Number(rows[0]?.total_users ?? 0);
+      } finally {
+        connection.release();
+      }
+    } catch (error) {
+      console.error('Error al contar usuarios:', error);
+      throw new DatabaseError('Error al contar usuarios');
+    }
+  }
+
+  async countUsersCreatedSince(since: Date): Promise<number> {
+    try {
+      const db = await MySQLDatabase.getInstance();
+      const connection = await db.getConnection();
+      try {
+        const [rows] = await connection.query<RowDataPacket[]>(
+          `SELECT COUNT(*) AS new_users FROM ${this.tableName} WHERE created_at >= ?`,
+          [since],
+        );
+        return Number(rows[0]?.new_users ?? 0);
+      } finally {
+        connection.release();
+      }
+    } catch (error) {
+      console.error('Error al contar usuarios nuevos:', error);
+      throw new DatabaseError('Error al contar usuarios nuevos');
+    }
+  }
+
+  async countActiveUsers(): Promise<number> {
+    try {
+      const db = await MySQLDatabase.getInstance();
+      const connection = await db.getConnection();
+      try {
+        const [rows] = await connection.query<RowDataPacket[]>(
+          `SELECT COUNT(*) AS active_users FROM ${this.tableName} WHERE is_active = 1`,
+        );
+        return Number(rows[0]?.active_users ?? 0);
+      } finally {
+        connection.release();
+      }
+    } catch (error) {
+      console.error('Error al contar usuarios activos:', error);
+      throw new DatabaseError('Error al contar usuarios activos');
+    }
+  }
 }
 
 export default UserModel;

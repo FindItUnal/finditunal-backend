@@ -4,6 +4,8 @@ import ImageModel from '../models/ImageModel';
 import { CreateComplaintInput, UpdateComplaintStatusInput } from '../schemas/complaintSchemas';
 import { NotFoundError } from '../utils/errors';
 import { deleteImage } from '../middlewares/multerMiddleware';
+import ActivityLogModel from '../models/ActivityLogModel';
+import { ActivityLogService } from './ActivityLogService';
 
 interface ComplaintFilters {
   status?: ComplaintStatus;
@@ -12,11 +14,15 @@ interface ComplaintFilters {
 }
 
 export class ComplaintService {
+  private activityLog: ActivityLogService;
+
   constructor(
     private complaintModel: ComplaintModel,
     private reportModel: ReportModel,
     private imageModel: ImageModel,
-  ) {}
+  ) {
+    this.activityLog = new ActivityLogService(new ActivityLogModel());
+  }
 
   private async getComplaintOrThrow(complaintId: number): Promise<ComplaintRecord> {
     const complaint = await this.complaintModel.getComplaintById(complaintId);
@@ -37,6 +43,20 @@ export class ComplaintService {
       reporter_user_id: reporterUserId,
       reason: input.reason,
       description: input.description,
+    });
+
+    await this.activityLog.logActivity({
+      event_type: 'COMPLAINT_CREATED',
+      actor_user_id: reporterUserId,
+      target_type: 'COMPLAINT',
+      target_id: result.insertId,
+      title: `Nueva denuncia recibida: ${input.reason}`,
+      description: `El usuario ${reporterUserId} envio una denuncia sobre el reporte ${reportId}`,
+      metadata: {
+        complaint_id: result.insertId,
+        report_id: reportId,
+        reason: input.reason,
+      },
     });
 
     return result.insertId;
@@ -90,6 +110,19 @@ export class ComplaintService {
     }
 
     await this.complaintModel.updateComplaint(complaintId, updates);
+
+    await this.activityLog.logActivity({
+      event_type: 'COMPLAINT_UPDATED',
+      actor_user_id: adminUserId,
+      target_type: 'COMPLAINT',
+      target_id: complaintId,
+      title: `Estado de denuncia actualizado: ${updates.status ?? 'sin cambios'}`,
+      description: `El administrador ${adminUserId} actualizo la denuncia ${complaintId}`,
+      metadata: {
+        complaint_id: complaintId,
+        status: updates.status,
+      },
+    });
   }
 
   async discardComplaint(complaintId: number, adminUserId: string, adminNotes: string): Promise<void> {
@@ -100,6 +133,19 @@ export class ComplaintService {
       admin_notes: adminNotes,
       resolved_by: adminUserId,
       resolved_at: new Date(),
+    });
+
+    await this.activityLog.logActivity({
+      event_type: 'COMPLAINT_RESOLVED',
+      actor_user_id: adminUserId,
+      target_type: 'COMPLAINT',
+      target_id: complaintId,
+      title: 'Denuncia descartada',
+      description: `El administrador ${adminUserId} descarto la denuncia ${complaintId}`,
+      metadata: {
+        complaint_id: complaintId,
+        action: 'discard',
+      },
     });
   }
 
@@ -123,6 +169,20 @@ export class ComplaintService {
     images.forEach((image) => deleteImage(image.image_url));
 
     await this.reportModel.deleteReport(report.report_id);
+
+    await this.activityLog.logActivity({
+      event_type: 'COMPLAINT_RESOLVED',
+      actor_user_id: adminUserId,
+      target_type: 'COMPLAINT',
+      target_id: complaintId,
+      title: 'Denuncia resuelta y reporte eliminado',
+      description: `El administrador ${adminUserId} resolvio la denuncia ${complaintId} eliminando el reporte asociado`,
+      metadata: {
+        complaint_id: complaintId,
+        report_id: report.report_id,
+        action: 'resolve_and_delete_report',
+      },
+    });
   }
 }
 

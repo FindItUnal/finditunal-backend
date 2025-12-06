@@ -176,6 +176,69 @@ class ComplaintModel {
       throw new DatabaseError('Error al actualizar denuncia');
     }
   }
+
+  async countComplaintsByStatuses(statuses: ComplaintStatus[]): Promise<number> {
+    if (!statuses.length) return 0;
+    try {
+      const db = await MySQLDatabase.getInstance();
+      const connection = await db.getConnection();
+      try {
+        const placeholders = statuses.map(() => '?').join(', ');
+        const [rows] = await connection.query<RowDataPacket[]>(
+          `SELECT COUNT(*) AS total FROM ${this.tableName} WHERE status IN (${placeholders})`,
+          statuses,
+        );
+        return Number(rows[0]?.total ?? 0);
+      } finally {
+        connection.release();
+      }
+    } catch (error) {
+      console.error('Error al contar denuncias por estado:', error);
+      throw new DatabaseError('Error al contar denuncias');
+    }
+  }
+
+  async countComplaintsCreatedInRange(start: Date, end: Date): Promise<number> {
+    try {
+      const db = await MySQLDatabase.getInstance();
+      const connection = await db.getConnection();
+      try {
+        const [rows] = await connection.query<RowDataPacket[]>(
+          `SELECT COUNT(*) AS total FROM ${this.tableName} WHERE created_at >= ? AND created_at < ?`,
+          [start, end],
+        );
+        return Number(rows[0]?.total ?? 0);
+      } finally {
+        connection.release();
+      }
+    } catch (error) {
+      console.error('Error al contar denuncias en rango:', error);
+      throw new DatabaseError('Error al contar denuncias');
+    }
+  }
+
+  async countComplaintsResolvedInRange(start: Date, end: Date): Promise<number> {
+    try {
+      const db = await MySQLDatabase.getInstance();
+      const connection = await db.getConnection();
+      try {
+        const [rows] = await connection.query<RowDataPacket[]>(
+          `SELECT COUNT(*) AS total 
+           FROM ${this.tableName} 
+           WHERE status IN ('resolved', 'rejected') 
+             AND resolved_at IS NOT NULL 
+             AND resolved_at >= ? AND resolved_at < ?`,
+          [start, end],
+        );
+        return Number(rows[0]?.total ?? 0);
+      } finally {
+        connection.release();
+      }
+    } catch (error) {
+      console.error('Error al contar denuncias resueltas en rango:', error);
+      throw new DatabaseError('Error al contar denuncias resueltas');
+    }
+  }
 }
 
 export default ComplaintModel;

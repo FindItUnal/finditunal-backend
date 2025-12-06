@@ -4,6 +4,8 @@ import UserModel from '../models/UserModel';
 import { UpdateUserInput } from '../schemas/authSchemas';
 import { UnauthorizedError, NotFoundError, ConflictError, ForbiddenError } from '../utils/errors';
 import { OAuth2Client } from 'google-auth-library';
+import ActivityLogModel from '../models/ActivityLogModel';
+import { ActivityLogService } from './ActivityLogService';
 
 export interface TokenPair {
   accessToken: string;
@@ -20,7 +22,11 @@ export interface UserInfo {
 }
 
 export class AuthService {
-  constructor(private userModel: UserModel) {}
+  private activityLog: ActivityLogService;
+
+  constructor(private userModel: UserModel) {
+    this.activityLog = new ActivityLogService(new ActivityLogModel());
+  }
 
   // Construir URL de autorización de Google
   getGoogleAuthUrl(state?: string): string {
@@ -75,6 +81,7 @@ export class AuthService {
     }
 
     // Buscar o crear usuario por google_id
+    let createdUserId: string | null = null;
     let user = await this.userModel.getUserByGoogleId(googleId);
     if (!user) {
       const userByEmail = await this.userModel.getUserByEmail(email);
@@ -90,6 +97,7 @@ export class AuthService {
           role: isAdmin ? 'admin' : 'user',
         });
         user = (await this.userModel.getUserByGoogleId(googleId))!;
+        createdUserId = generatedUserId;
       }
     }
 
@@ -114,6 +122,18 @@ export class AuthService {
       role: isAdmin ? 'admin' : user.role,
       is_active: user.is_active,
     };
+
+    if (createdUserId) {
+      await this.activityLog.logActivity({
+        event_type: 'USER_REGISTERED',
+        actor_user_id: createdUserId,
+        target_type: 'USER',
+        target_id: createdUserId,
+        title: `Nuevo usuario registrado: ${email}`,
+        description: `Usuario registrado via Google OAuth con email ${email}`,
+        metadata: { email, role: isAdmin ? 'admin' : user.role },
+      });
+    }
 
     return { tokens: tokensPair, user: userInfo };
   }

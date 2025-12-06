@@ -35,6 +35,137 @@ const options: swaggerJsdoc.Options = {
         },
       },
       schemas: {
+        ActivityLogRecord: {
+          type: 'object',
+          properties: {
+            activity_id: {
+              type: 'integer',
+              description: 'ID unico del registro de actividad',
+              example: 1,
+            },
+            event_type: {
+              type: 'string',
+              description: 'Tipo de evento registrado',
+              example: 'REPORT_CREATED',
+            },
+            actor_user_id: {
+              type: 'string',
+              nullable: true,
+              description: 'ID del usuario que realizo la accion (si aplica)',
+              example: 'user1234',
+            },
+            target_type: {
+              type: 'string',
+              description: 'Tipo de recurso afectado por la accion',
+              example: 'REPORT',
+            },
+            target_id: {
+              type: 'string',
+              nullable: true,
+              description: 'Identificador del recurso afectado',
+              example: '10',
+            },
+            title: {
+              type: 'string',
+              description: 'Titulo corto y legible del evento',
+              example: 'Nuevo objeto publicado: iPhone 13 Pro',
+            },
+            description: {
+              type: 'string',
+              nullable: true,
+              description: 'Descripcion detallada del evento',
+              example: 'El usuario user1234 publico un nuevo reporte de objeto perdido.',
+            },
+            metadata: {
+              type: 'object',
+              nullable: true,
+              additionalProperties: true,
+              description: 'Datos adicionales estructurados del evento (JSON)',
+            },
+            created_at: {
+              type: 'string',
+              format: 'date-time',
+              description: 'Fecha y hora en que se registro el evento',
+              example: '2024-02-10T12:00:00Z',
+            },
+          },
+        },
+        ActivityLogResponse: {
+          type: 'object',
+          properties: {
+            items: {
+              type: 'array',
+              items: {
+                $ref: '#/components/schemas/ActivityLogRecord',
+              },
+            },
+            total: {
+              type: 'integer',
+              description: 'Total de registros de actividad disponibles',
+              example: 125,
+            },
+            limit: {
+              type: 'integer',
+              description: 'Cantidad maxima de registros devueltos en esta pagina',
+              example: 10,
+            },
+            offset: {
+              type: 'integer',
+              description: 'Desplazamiento utilizado para esta pagina',
+              example: 0,
+            },
+          },
+        },
+        AdminDashboardStats: {
+          type: 'object',
+          properties: {
+            total_users: {
+              type: 'integer',
+              description: 'Numero total de usuarios registrados',
+              example: 245,
+            },
+            new_users_last_7_days: {
+              type: 'integer',
+              description: 'Usuarios nuevos registrados en los ultimos 7 dias',
+              example: 12,
+            },
+            total_reports: {
+              type: 'integer',
+              description: 'Numero total de reportes creados',
+              example: 87,
+            },
+            reports_today: {
+              type: 'integer',
+              description: 'Reportes creados en la fecha actual',
+              example: 8,
+            },
+            active_complaints: {
+              type: 'integer',
+              description: 'Denuncias activas que requieren atencion (pending, in_review)',
+              example: 12,
+            },
+            recovered_reports_current_month: {
+              type: 'integer',
+              description: 'Reportes marcados como entregados en el mes actual',
+              example: 34,
+            },
+            recovery_rate_current_month: {
+              type: 'integer',
+              description: 'Porcentaje de reportes del mes actual que fueron entregados',
+              example: 39,
+            },
+            active_users_percentage: {
+              type: 'integer',
+              description: 'Porcentaje de usuarios activos sobre el total',
+              example: 68,
+            },
+            resolved_complaints_percentage_current_month: {
+              type: 'integer',
+              description: 'Porcentaje de denuncias del mes actual que fueron resueltas o rechazadas',
+              example: 85,
+            },
+          },
+        },
         User: {
           type: 'object',
           properties: {
@@ -760,6 +891,10 @@ const options: swaggerJsdoc.Options = {
       {
         name: 'Complaints',
         description: 'Endpoints para denuncias de publicaciones',
+      },
+      {
+        name: 'Activity',
+        description: 'Registro global de actividad de la aplicacion (solo admin)',
       },
       {
         name: 'Chats',

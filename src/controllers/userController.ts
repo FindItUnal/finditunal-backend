@@ -92,4 +92,14 @@ export class UserController {
       next(error);
     }
   };
+
+  // Estadisticas del dashboard admin
+  getAdminDashboardStats = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const stats = await this.userAdminService.getDashboardStats();
+      sendSuccess(res, stats);
+    } catch (error) {
+      next(error);
+    }
+  };
 }

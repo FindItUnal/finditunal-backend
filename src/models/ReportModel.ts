@@ -162,5 +162,80 @@ class ReportModel {
       throw new DatabaseError('Error al eliminar reporte');
     }
   }
+
+  async countAllReports(): Promise<number> {
+    try {
+      const db = await MySQLDatabase.getInstance();
+      const connection = await db.getConnection();
+      try {
+        const [rows] = await connection.query<RowDataPacket[]>(
+          'SELECT COUNT(*) AS total_reports FROM reports',
+        );
+        return Number(rows[0]?.total_reports ?? 0);
+      } finally {
+        connection.release();
+      }
+    } catch (error) {
+      console.error('Error al contar reportes:', error);
+      throw new DatabaseError('Error al contar reportes');
+    }
+  }
+
+  async countReportsCreatedSince(since: Date): Promise<number> {
+    try {
+      const db = await MySQLDatabase.getInstance();
+      const connection = await db.getConnection();
+      try {
+        const [rows] = await connection.query<RowDataPacket[]>(
+          'SELECT COUNT(*) AS reports_since FROM reports WHERE created_at >= ?',
+          [since],
+        );
+        return Number(rows[0]?.reports_since ?? 0);
+      } finally {
+        connection.release();
+      }
+    } catch (error) {
+      console.error('Error al contar reportes recientes:', error);
+      throw new DatabaseError('Error al contar reportes');
+    }
+  }
+
+  async countReportsCreatedInRange(start: Date, end: Date): Promise<number> {
+    try {
+      const db = await MySQLDatabase.getInstance();
+      const connection = await db.getConnection();
+      try {
+        const [rows] = await connection.query<RowDataPacket[]>(
+          'SELECT COUNT(*) AS reports_in_range FROM reports WHERE created_at >= ? AND created_at < ?',
+          [start, end],
+        );
+        return Number(rows[0]?.reports_in_range ?? 0);
+      } finally {
+        connection.release();
+      }
+    } catch (error) {
+      console.error('Error al contar reportes en rango:', error);
+      throw new DatabaseError('Error al contar reportes');
+    }
+  }
+
+  async countDeliveredReportsInRange(start: Date, end: Date): Promise<number> {
+    try {
+      const db = await MySQLDatabase.getInstance();
+      const connection = await db.getConnection();
+      try {
+        const [rows] = await connection.query<RowDataPacket[]>(
+          "SELECT COUNT(*) AS delivered_in_range FROM reports WHERE status = 'entregado' AND updated_at >= ? AND updated_at < ?",
+          [start, end],
+        );
+        return Number(rows[0]?.delivered_in_range ?? 0);
+      } finally {
+        connection.release();
+      }
+    } catch (error) {
+      console.error('Error al contar reportes entregados en rango:', error);
+      throw new DatabaseError('Error al contar reportes entregados');
+    }
+  }
 }
 export default ReportModel;
