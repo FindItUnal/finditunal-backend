@@ -370,6 +370,144 @@ const options: swaggerJsdoc.Options = {
             },
           },
         },
+        ChatConversation: {
+          type: 'object',
+          properties: {
+            conversation_id: {
+              type: 'integer',
+              description: 'ID unico de la conversacion',
+              example: 1,
+            },
+            report_id: {
+              type: 'integer',
+              description: 'ID del reporte asociado',
+              example: 10,
+            },
+            user1_id: {
+              type: 'string',
+              description: 'ID del usuario propietario del reporte',
+              example: 'user_owner_1234',
+            },
+            user2_id: {
+              type: 'string',
+              description: 'ID del usuario interesado',
+              example: 'user_interested_5678',
+            },
+            created_at: {
+              type: 'string',
+              format: 'date-time',
+              description: 'Fecha de creacion de la conversacion',
+              example: '2024-02-10T12:00:00Z',
+            },
+            updated_at: {
+              type: 'string',
+              format: 'date-time',
+              description: 'Fecha de ultima actividad en la conversacion',
+              example: '2024-02-10T13:00:00Z',
+            },
+          },
+        },
+        ChatConversationSummary: {
+          type: 'object',
+          properties: {
+            conversation_id: {
+              type: 'integer',
+              description: 'ID unico de la conversacion',
+              example: 1,
+            },
+            report_id: {
+              type: 'integer',
+              description: 'ID del reporte asociado',
+              example: 10,
+            },
+            report_title: {
+              type: 'string',
+              description: 'Titulo del reporte asociado',
+              example: 'Billetera perdida en la biblioteca',
+            },
+            other_user_id: {
+              type: 'string',
+              description: 'ID del otro usuario participante',
+              example: 'user_interested_5678',
+            },
+            other_user_name: {
+              type: 'string',
+              description: 'Nombre del otro usuario participante',
+              example: 'Juan Perez',
+            },
+            last_message_text: {
+              type: 'string',
+              nullable: true,
+              description: 'Contenido del ultimo mensaje enviado en la conversacion',
+              example: 'Muchas gracias por responder',
+            },
+            last_message_at: {
+              type: 'string',
+              format: 'date-time',
+              nullable: true,
+              description: 'Fecha del ultimo mensaje',
+              example: '2024-02-10T13:00:00Z',
+            },
+            unread_count: {
+              type: 'integer',
+              description: 'Cantidad de mensajes no leidos por el usuario',
+              example: 2,
+            },
+            updated_at: {
+              type: 'string',
+              format: 'date-time',
+              description: 'Fecha de ultima actividad en la conversacion',
+              example: '2024-02-10T13:00:00Z',
+            },
+          },
+        },
+        ChatMessage: {
+          type: 'object',
+          properties: {
+            message_id: {
+              type: 'integer',
+              description: 'ID unico del mensaje',
+              example: 1,
+            },
+            conversation_id: {
+              type: 'integer',
+              description: 'ID de la conversacion a la que pertenece',
+              example: 1,
+            },
+            sender_id: {
+              type: 'string',
+              description: 'ID del usuario que envio el mensaje',
+              example: 'user_owner_1234',
+            },
+            message_text: {
+              type: 'string',
+              description: 'Contenido del mensaje',
+              example: 'Hola, vi tu publicacion sobre la billetera',
+            },
+            is_read: {
+              type: 'boolean',
+              description: 'Indica si el mensaje ya fue leido por el destinatario',
+              example: false,
+            },
+            created_at: {
+              type: 'string',
+              format: 'date-time',
+              description: 'Fecha de envio del mensaje',
+              example: '2024-02-10T12:30:00Z',
+            },
+          },
+        },
+        CreateChatMessage: {
+          type: 'object',
+          required: ['message_text'],
+          properties: {
+            message_text: {
+              type: 'string',
+              description: 'Texto del mensaje a enviar',
+              example: 'Hola, estoy interesado en tu publicacion',
+            },
+          },
+        },
         Object: {
           type: 'object',
           properties: {
@@ -622,6 +760,10 @@ const options: swaggerJsdoc.Options = {
       {
         name: 'Complaints',
         description: 'Endpoints para denuncias de publicaciones',
+      },
+      {
+        name: 'Chats',
+        description: 'Endpoints de conversaciones y mensajes privados',
       },
     ],
   },

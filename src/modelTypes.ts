@@ -5,6 +5,8 @@ import LocationModel from './models/LocationModel';
 import ObjectModel from './models/ObjectModel';
 import ImageModel from './models/ImageModel';
 import ComplaintModel from './models/ComplaintModel';
+import ConversationModel from './models/ConversationModel';
+import MessageModel from './models/MessageModel';
 
 export interface Models {
   userModel: typeof UserModel;
@@ -14,4 +16,6 @@ export interface Models {
   objectModel: typeof ObjectModel;
   imageModel: typeof ImageModel;
   complaintModel: typeof ComplaintModel;
+  conversationModel: typeof ConversationModel;
+  messageModel: typeof MessageModel;
 }
