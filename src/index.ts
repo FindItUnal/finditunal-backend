@@ -183,6 +183,7 @@ export const createApp = async ({
     });
 
     NotificationService.setSocketServer(io);
+    ChatService.setSocketServer(io);
 
     const chatService = new ChatService(
       new models.conversationModel(),

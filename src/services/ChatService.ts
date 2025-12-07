@@ -1,3 +1,4 @@
+import { Server as SocketIOServer } from 'socket.io';
 import ConversationModel, { ConversationRecord, ConversationSummary } from '../models/ConversationModel';
 import MessageModel, { MessageRecord } from '../models/MessageModel';
 import ReportModel from '../models/ReportModel';
@@ -12,6 +13,7 @@ export interface SendMessageResult {
 }
 
 export class ChatService {
+  private static io: SocketIOServer | null = null;
   private notificationService: NotificationService;
 
   constructor(
@@ -20,6 +22,38 @@ export class ChatService {
     private reportModel: ReportModel,
   ) {
     this.notificationService = new NotificationService(new NotificationModel());
+  }
+
+  static setSocketServer(io: SocketIOServer): void {
+    ChatService.io = io;
+  }
+
+  private emitNewMessage(message: MessageRecord, recipientUserId: string): void {
+    if (!ChatService.io) {
+      return;
+    }
+
+    const messageData = {
+      conversation_id: message.conversation_id,
+      message_id: message.message_id,
+      sender_id: message.sender_id,
+      message_text: message.message_text,
+      created_at: message.created_at,
+    };
+
+    // Emitir al room de la conversación
+    const conversationRoom = `conversation:${message.conversation_id}`;
+    ChatService.io.to(conversationRoom).emit('message:new', messageData);
+
+    // Emitir notificación al usuario receptor
+    const recipientRoom = `user:${recipientUserId}`;
+    ChatService.io.to(recipientRoom).emit('notification:new', {
+      type: 'chat_message',
+      conversation_id: message.conversation_id,
+      message_id: message.message_id,
+      from_user_id: message.sender_id,
+      created_at: message.created_at,
+    });
   }
 
   async createOrGetConversation(reportId: number, currentUserId: string): Promise<ConversationRecord> {
@@ -101,6 +135,9 @@ export class ChatService {
     await this.conversationModel.touchConversation(conversationId);
 
     const recipientUserId = conversation.user1_id === userId ? conversation.user2_id : conversation.user1_id;
+
+    // Emitir mensaje via Socket.IO para tiempo real
+    this.emitNewMessage(message, recipientUserId);
 
     const preview = messageText.length > 120 ? `${messageText.slice(0, 117)}...` : messageText;
 
