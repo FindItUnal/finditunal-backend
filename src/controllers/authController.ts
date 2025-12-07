@@ -8,20 +8,7 @@ export class AuthController {
   constructor(private authService: AuthService) {}
 
   // Redirige a Google OAuth
-  googleAuth = async (req: Request, res: Response): Promise<void> => {
-    // Guardar el origin del frontend en una cookie para redirigir después del callback
-    const referer = req.headers.referer || req.headers.origin;
-    
-    if (referer) {
-      res.cookie('auth_origin', referer, {
-        httpOnly: true,
-        secure: APP_CONFIG.COOKIE_SECURE,
-        maxAge: 5 * 60 * 1000, // 5 minutos
-        sameSite: APP_CONFIG.COOKIE_SECURE ? 'none' : 'lax',
-        path: '/',
-      });
-    }
-    
+  googleAuth = async (_req: Request, res: Response): Promise<void> => {
     const url = this.authService.getGoogleAuthUrl();
     res.redirect(url);
   };
@@ -52,58 +39,15 @@ export class AuthController {
         path: '/',
       });
 
-      // Obtener el origin guardado o usar el FRONTEND_URL por defecto
-      const authOrigin = req.cookies.auth_origin;
-      let redirectUrl = APP_CONFIG.FRONTEND_URL;
-      
-      if (authOrigin) {
-        // Limpiar la cookie de origin
-        res.clearCookie('auth_origin', {
-          httpOnly: true,
-          secure: APP_CONFIG.COOKIE_SECURE,
-          sameSite: APP_CONFIG.COOKIE_SECURE ? 'none' : 'lax',
-          path: '/',
-        });
-        
-        // Extraer el dominio base del authOrigin
-        try {
-          const originUrl = new URL(authOrigin);
-          redirectUrl = `${originUrl.protocol}//${originUrl.host}/dashboard`;
-        } catch {
-          // Si falla el parsing, usar el default
-          redirectUrl = APP_CONFIG.FRONTEND_URL;
-        }
-      }
-      
+      // Redirigir al frontend tras login
+      const redirectUrl = `${APP_CONFIG.FRONTEND_URL}`;
       res.redirect(redirectUrl);
     } catch (error) {
       // If the error is due to domain restriction, redirect back to frontend login with a flag
       try {
         // Only redirect for known unauthorized domain errors to give user feedback
         if (error instanceof AppError && error.statusCode === 401 && /dominio/i.test(error.message)) {
-          // Obtener el origin guardado o usar el FRONTEND_URL por defecto
-          const authOrigin = req.cookies.auth_origin;
-          let frontendUrl = APP_CONFIG.FRONTEND_URL;
-          
-          if (authOrigin) {
-            // Limpiar la cookie de origin
-            res.clearCookie('auth_origin', {
-              httpOnly: true,
-              secure: APP_CONFIG.COOKIE_SECURE,
-              sameSite: APP_CONFIG.COOKIE_SECURE ? 'none' : 'lax',
-              path: '/',
-            });
-            
-            try {
-              const originUrl = new URL(authOrigin);
-              frontendUrl = `${originUrl.protocol}//${originUrl.host}`;
-            } catch {
-              // Si falla el parsing, usar el default
-              frontendUrl = APP_CONFIG.FRONTEND_URL;
-            }
-          }
-          
-          const frontend = frontendUrl.replace(/\/$/, '') + '/login';
+          const frontend = APP_CONFIG.FRONTEND_URL.replace(/\/$/, '') + '/login';
           const params = new URLSearchParams({ error: 'domain_not_allowed' });
           res.redirect(`${frontend}?${params.toString()}`);
           return;
