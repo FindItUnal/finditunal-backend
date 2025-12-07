@@ -83,10 +83,12 @@ export class AuthService {
     // Buscar o crear usuario por google_id
     let createdUserId: string | null = null;
     let user = await this.userModel.getUserByGoogleId(googleId);
+    let matchedByEmail = false;
     if (!user) {
       const userByEmail = await this.userModel.getUserByEmail(email);
       if (userByEmail) {
         user = userByEmail;
+        matchedByEmail = true;
       } else {
         const generatedUserId = await this.generateUserId(email);
         await this.userModel.createUserFromGoogle({
@@ -110,6 +112,15 @@ export class AuthService {
         throw new ForbiddenError('El usuario se encuentra baneado');
       }
       throw new ForbiddenError('El usuario no est\u00e1 activo');
+    }
+
+    const needsIdentityRestore = matchedByEmail || user.google_id !== googleId || user.name === 'Usuario Baneado';
+    if (needsIdentityRestore) {
+      await this.userModel.restoreUserIdentity(user.user_id, {
+        google_id: googleId,
+        name,
+      });
+      user = (await this.userModel.getUserById(user.user_id))!;
     }
 
     const tokensPair = this.generateTokens(user.user_id, isAdmin ? 'admin' : user.role);

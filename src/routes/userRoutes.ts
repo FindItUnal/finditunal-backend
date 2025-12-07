@@ -244,5 +244,32 @@ export const createUserRouter = (userModel: UserModel): Router => {
    */
   userRouter.patch('/admin/users/:user_id/ban', authenticate, authorizeAdmin, userController.banUser);
 
+  /**
+   * @swagger
+   * /user/admin/users/{user_id}/unban:
+   *   patch:
+   *     summary: Desbanear usuario (admin)
+   *     description: Restaura el acceso de un usuario previamente suspendido.
+   *     tags: [Users]
+   *     security:
+   *       - cookieAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: user_id
+   *         required: true
+   *         schema:
+   *           type: string
+   *     responses:
+   *       200:
+   *         description: Usuario desbaneado.
+   *       401:
+   *         $ref: '#/components/responses/UnauthorizedError'
+   *       403:
+   *         $ref: '#/components/responses/ForbiddenError'
+   *       404:
+   *         $ref: '#/components/responses/NotFoundError'
+   */
+  userRouter.patch('/admin/users/:user_id/unban', authenticate, authorizeAdmin, userController.unbanUser);
+
   return userRouter;
 };

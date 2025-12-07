@@ -202,4 +202,46 @@ export class UserAdminService {
       },
     });
   }
+
+  async unbanUser(targetUserId: string, adminId: string): Promise<void> {
+    if (!adminId) {
+      throw new ConflictError('Administrador no autenticado');
+    }
+
+    if (targetUserId === adminId) {
+      throw new ConflictError('No puedes desbanearte a ti mismo');
+    }
+
+    if (BOT_AUTH.USER_ID && targetUserId === BOT_AUTH.USER_ID) {
+      throw new ConflictError('No puedes desbanear al bot del sistema');
+    }
+
+    const user = await this.userModel.getUserById(targetUserId);
+    if (!user) {
+      throw new NotFoundError('Usuario no encontrado');
+    }
+
+    if (user.role === 'admin') {
+      throw new ConflictError('No puedes desbanear a otro administrador');
+    }
+
+    if (user.is_active !== 2) {
+      throw new ConflictError('El usuario no se encuentra baneado');
+    }
+
+    await this.userModel.unbanUser(user.user_id);
+
+    await this.activityLog.logActivity({
+      event_type: 'USER_UNBANNED',
+      actor_user_id: adminId,
+      target_type: 'USER',
+      target_id: targetUserId,
+      title: `Usuario reactivado: ${user.email}`,
+      description: `El administrador ${adminId} reactiva al usuario ${targetUserId}`,
+      metadata: {
+        user_id: targetUserId,
+        email: user.email,
+      },
+    });
+  }
 }

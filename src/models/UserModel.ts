@@ -208,6 +208,59 @@ class UserModel {
     }
   }
 
+  async unbanUser(user_id: string): Promise<void> {
+    try {
+      const db = await MySQLDatabase.getInstance();
+      const connection = await db.getConnection();
+      try {
+        await connection.query(
+          `UPDATE ${this.tableName}
+             SET is_active = 1, is_confirmed = 1
+           WHERE user_id = ?`,
+          [user_id],
+        );
+      } finally {
+        connection.release();
+      }
+    } catch (error) {
+      console.error('Error al desbanear usuario:', error);
+      throw new DatabaseError('Error al desbanear usuario');
+    }
+  }
+
+  async restoreUserIdentity(
+    user_id: string,
+    updates: { google_id: string; name: string; phone_number?: string | null },
+  ): Promise<void> {
+    try {
+      const db = await MySQLDatabase.getInstance();
+      const connection = await db.getConnection();
+      try {
+        const phoneProvided = Object.prototype.hasOwnProperty.call(updates, 'phone_number');
+        if (phoneProvided) {
+          await connection.query(
+            `UPDATE ${this.tableName}
+               SET google_id = ?, name = ?, phone_number = ?, is_confirmed = 1, is_active = 1
+             WHERE user_id = ?`,
+            [updates.google_id, updates.name, updates.phone_number ?? null, user_id],
+          );
+        } else {
+          await connection.query(
+            `UPDATE ${this.tableName}
+               SET google_id = ?, name = ?, is_confirmed = 1, is_active = 1
+             WHERE user_id = ?`,
+            [updates.google_id, updates.name, user_id],
+          );
+        }
+      } finally {
+        connection.release();
+      }
+    } catch (error) {
+      console.error('Error al restaurar identidad del usuario:', error);
+      throw new DatabaseError('Error al restaurar identidad del usuario');
+    }
+  }
+
   async countAllUsers(): Promise<number> {
     try {
       const db = await MySQLDatabase.getInstance();

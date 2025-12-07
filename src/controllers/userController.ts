@@ -93,6 +93,23 @@ export class UserController {
     }
   };
 
+  // Desbanear usuario (admin)
+  unbanUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const adminId = (req as any).user?.user_id as string | undefined;
+      if (!adminId) {
+        res.status(401).json({ message: 'Usuario no autenticado' });
+        return;
+      }
+
+      const userId = req.params.user_id;
+      await this.userAdminService.unbanUser(userId, adminId);
+      sendSuccess(res, { message: 'Usuario desbaneado exitosamente' });
+    } catch (error) {
+      next(error);
+    }
+  };
+
   // Estadisticas del dashboard admin
   getAdminDashboardStats = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
