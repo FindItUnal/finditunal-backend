@@ -120,6 +120,25 @@ class ConversationModel {
     }
   }
 
+  async existsByReportAndUsers(params: { report_id: number; owner_id: string; participant_id: string }): Promise<boolean> {
+    try {
+      const db = await MySQLDatabase.getInstance();
+      const connection = await db.getConnection();
+      try {
+        const [rows] = await connection.query<RowDataPacket[]>(
+          `SELECT conversation_id FROM ${this.tableName} WHERE report_id = ? AND user1_id = ? AND user2_id = ? LIMIT 1`,
+          [params.report_id, params.owner_id, params.participant_id],
+        );
+        return rows.length > 0;
+      } finally {
+        connection.release();
+      }
+    } catch (error) {
+      console.error('Error al verificar existencia de conversacion:', error);
+      throw new DatabaseError('Error al verificar conversacion');
+    }
+  }
+
   async getConversationsByUser(user_id: string): Promise<ConversationSummary[]> {
     try {
       const db = await MySQLDatabase.getInstance();

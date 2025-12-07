@@ -53,6 +53,24 @@ export class ChatService {
     return conversation;
   }
 
+  async conversationExists(reportId: number, currentUserId: string): Promise<boolean> {
+    const report = await this.reportModel.getReportById(reportId);
+    if (!report) {
+      throw new NotFoundError('Reporte no encontrado');
+    }
+
+    const ownerId = report.user_id;
+    if (ownerId === currentUserId) {
+      throw new ForbiddenError('No puedes iniciar una conversacion contigo mismo');
+    }
+
+    return this.conversationModel.existsByReportAndUsers({
+      report_id: reportId,
+      owner_id: ownerId,
+      participant_id: currentUserId,
+    });
+  }
+
   async getUserConversations(userId: string): Promise<ConversationSummary[]> {
     return this.conversationModel.getConversationsByUser(userId);
   }

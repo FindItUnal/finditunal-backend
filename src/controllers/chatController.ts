@@ -18,6 +18,19 @@ export class ChatController {
     }
   };
 
+  conversationExists = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const userId = req.params.user_id;
+      const reportId = parseInt(req.params.report_id, 10);
+
+      const exists = await this.chatService.conversationExists(reportId, userId);
+
+      sendSuccess(res, { exists });
+    } catch (error) {
+      next(error);
+    }
+  };
+
   getUserConversations = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const userId = req.params.user_id;

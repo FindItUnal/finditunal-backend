@@ -20,6 +20,51 @@ export const createChatRouter = (
 
   /**
    * @swagger
+   * /user/{user_id}/reports/{report_id}/conversations/exists:
+   *   get:
+   *     summary: Verificar si existe una conversacion para un reporte
+   *     description: Devuelve un indicador booleano que representa si ya existe una conversacion entre el propietario del reporte y el usuario autenticado.
+   *     tags: [Chats]
+   *     security:
+   *       - cookieAuth: []
+   *     parameters:
+   *       - in: path
+   *         name: user_id
+   *         required: true
+   *         schema:
+   *           type: string
+   *         description: ID del usuario autenticado interesado en la publicacion.
+   *       - in: path
+   *         name: report_id
+   *         required: true
+   *         schema:
+   *           type: integer
+   *         description: ID del reporte sobre el cual se quiere verificar la conversacion.
+   *     responses:
+   *       200:
+   *         description: Resultado de la verificacion.
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 exists:
+   *                   type: boolean
+   *                   description: Indica si la conversacion ya existe.
+   *       401:
+   *         $ref: '#/components/responses/UnauthorizedError'
+   *       403:
+   *         $ref: '#/components/responses/ForbiddenError'
+   *       404:
+   *         $ref: '#/components/responses/NotFoundError'
+   *       500:
+   *         $ref: '#/components/responses/InternalServerError'
+   */
+  // Verificar si existe una conversacion asociada a un reporte
+  chatRouter.get('/:user_id/reports/:report_id/conversations/exists', authenticate, chatController.conversationExists);
+
+  /**
+   * @swagger
    * /user/{user_id}/reports/{report_id}/conversations:
    *   post:
    *     summary: Crear o recuperar una conversacion para un reporte
