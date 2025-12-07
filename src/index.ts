@@ -192,12 +192,34 @@ export const createApp = async ({
 
     io.use((socket, next) => {
       try {
+        // 1. Intentar obtener token desde auth o header
         const auth = socket.handshake.auth as { token?: string } | undefined;
         const headerAuth = socket.handshake.headers?.authorization as string | undefined;
 
         let token = auth?.token;
         if (!token && headerAuth && headerAuth.startsWith('Bearer ')) {
           token = headerAuth.substring(7);
+        }
+
+        // 2. Fallback: leer desde cookies (igual que REST API)
+        if (!token) {
+          const cookieHeader = socket.handshake.headers.cookie;
+          if (cookieHeader) {
+            const cookies = cookieHeader.split(';').reduce(
+              (acc, c) => {
+                const trimmed = c.trim();
+                const eqIndex = trimmed.indexOf('=');
+                if (eqIndex > 0) {
+                  const key = trimmed.substring(0, eqIndex);
+                  const val = trimmed.substring(eqIndex + 1);
+                  acc[key] = val;
+                }
+                return acc;
+              },
+              {} as Record<string, string>,
+            );
+            token = cookies['accessToken'];
+          }
         }
 
         if (!token) {
