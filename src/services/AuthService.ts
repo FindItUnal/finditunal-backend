@@ -157,13 +157,29 @@ export class AuthService {
         user_id: string;
       };
 
-      // Generar un nuevo access token
-      const accessToken = jwt.sign({ user_id: decoded.user_id }, JWT_CONFIG.ACCESS_TOKEN_SECRET, {
-        expiresIn: JWT_CONFIG.ACCESS_TOKEN_EXPIRES_IN,
-      } as jwt.SignOptions);
+      // Obtener el usuario para incluir el rol en el nuevo token
+      const user = await this.userModel.getUserById(decoded.user_id);
+      if (!user) {
+        throw new UnauthorizedError('Usuario no encontrado');
+      }
+
+      // Verificar que el usuario siga activo
+      if (user.is_active !== 1) {
+        throw new UnauthorizedError('Usuario inactivo o baneado');
+      }
+
+      // Generar un nuevo access token con el rol
+      const accessToken = jwt.sign(
+        { user_id: decoded.user_id, role: user.role },
+        JWT_CONFIG.ACCESS_TOKEN_SECRET,
+        { expiresIn: JWT_CONFIG.ACCESS_TOKEN_EXPIRES_IN } as jwt.SignOptions
+      );
 
       return accessToken;
-    } catch {
+    } catch (error) {
+      if (error instanceof UnauthorizedError) {
+        throw error;
+      }
       throw new UnauthorizedError('Refresh token inválido');
     }
   }
