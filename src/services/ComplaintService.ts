@@ -46,6 +46,13 @@ export class ComplaintService {
       throw new NotFoundError('Reporte no encontrado');
     }
 
+    // Verificar si el usuario ya denunció este reporte
+    const existingComplaint = await this.complaintModel.getComplaintByReporterAndReport(reporterUserId, reportId);
+    if (existingComplaint) {
+      const { ConflictError } = await import('../utils/errors');
+      throw new ConflictError('Ya has denunciado esta publicación anteriormente');
+    }
+
     const result = await this.complaintModel.createComplaint({
       report_id: reportId,
       reporter_user_id: reporterUserId,

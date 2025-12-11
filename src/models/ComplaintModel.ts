@@ -74,6 +74,25 @@ class ComplaintModel {
     }
   }
 
+  async getComplaintByReporterAndReport(reporter_user_id: string, report_id: number): Promise<ComplaintRecord | null> {
+    try {
+      const db = await MySQLDatabase.getInstance();
+      const connection = await db.getConnection();
+      try {
+        const [rows] = await connection.query<RowDataPacket[]>(
+          `SELECT * FROM ${this.tableName} WHERE reporter_user_id = ? AND report_id = ? LIMIT 1`,
+          [reporter_user_id, report_id],
+        );
+        return (rows[0] as ComplaintRecord) || null;
+      } finally {
+        connection.release();
+      }
+    } catch (error) {
+      console.error('Error al verificar denuncia existente:', error);
+      throw new DatabaseError('Error al verificar denuncia existente');
+    }
+  }
+
   async getComplaintsByReporter(reporter_user_id: string, status?: ComplaintStatus): Promise<ComplaintRecord[]> {
     try {
       const db = await MySQLDatabase.getInstance();
