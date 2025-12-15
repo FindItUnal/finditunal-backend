@@ -55,19 +55,21 @@ export class AuthController {
         fullError: JSON.stringify(error, Object.getOwnPropertyNames(error))
       });
       
+      // Obtener la URL base del frontend (sin paths adicionales como /dashboard)
+      const frontendBaseUrl = new URL(APP_CONFIG.FRONTEND_URL).origin;
+      
       // Redirect banned users to the banned page
       if (errorStatusCode === 403 || (errorMessage && /baneado/i.test(errorMessage))) {
-        console.log('[GoogleCallback] Redirecting banned user to:', APP_CONFIG.FRONTEND_URL.replace(/\/$/, '') + '/banned?reason=banned');
-        const frontend = APP_CONFIG.FRONTEND_URL.replace(/\/$/, '') + '/banned?reason=banned';
-        res.redirect(frontend);
+        const bannedUrl = `${frontendBaseUrl}/banned?reason=banned`;
+        console.log('[GoogleCallback] Redirecting banned user to:', bannedUrl);
+        res.redirect(bannedUrl);
         return;
       }
       
       // Only redirect for known unauthorized domain errors to give user feedback
       if (errorStatusCode === 401 && /dominio/i.test(errorMessage)) {
-        const frontend = APP_CONFIG.FRONTEND_URL.replace(/\/$/, '') + '/login';
-        const params = new URLSearchParams({ error: 'domain_not_allowed' });
-        res.redirect(`${frontend}?${params.toString()}`);
+        const loginUrl = `${frontendBaseUrl}/login?error=domain_not_allowed`;
+        res.redirect(loginUrl);
         return;
       }
 
