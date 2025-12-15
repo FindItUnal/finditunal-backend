@@ -43,8 +43,14 @@ export class AuthController {
       const redirectUrl = `${APP_CONFIG.FRONTEND_URL}`;
       res.redirect(redirectUrl);
     } catch (error) {
-      // If the error is due to domain restriction, redirect back to frontend login with a flag
+      // Handle specific errors and redirect to frontend with appropriate flags
       try {
+        // Redirect banned users to the banned page
+        if (error instanceof AppError && error.statusCode === 403 && /baneado/i.test(error.message)) {
+          const frontend = APP_CONFIG.FRONTEND_URL.replace(/\/$/, '') + '/banned';
+          res.redirect(frontend);
+          return;
+        }
         // Only redirect for known unauthorized domain errors to give user feedback
         if (error instanceof AppError && error.statusCode === 401 && /dominio/i.test(error.message)) {
           const frontend = APP_CONFIG.FRONTEND_URL.replace(/\/$/, '') + '/login';
