@@ -47,12 +47,18 @@ export class AuthController {
       const errorMessage = error?.message || '';
       const errorStatusCode = error?.statusCode || 0;
       
-      console.log('[GoogleCallback] Error caught:', { errorMessage, errorStatusCode, errorName: error?.name });
+      console.log('[GoogleCallback] Error caught:', { 
+        errorMessage, 
+        errorStatusCode, 
+        errorName: error?.name,
+        errorConstructor: error?.constructor?.name,
+        fullError: JSON.stringify(error, Object.getOwnPropertyNames(error))
+      });
       
       // Redirect banned users to the banned page
       if (errorStatusCode === 403 || (errorMessage && /baneado/i.test(errorMessage))) {
-        console.log('[GoogleCallback] Redirecting banned user to /banned');
-        const frontend = APP_CONFIG.FRONTEND_URL.replace(/\/$/, '') + '/banned';
+        console.log('[GoogleCallback] Redirecting banned user to:', APP_CONFIG.FRONTEND_URL.replace(/\/$/, '') + '/banned?reason=banned');
+        const frontend = APP_CONFIG.FRONTEND_URL.replace(/\/$/, '') + '/banned?reason=banned';
         res.redirect(frontend);
         return;
       }
