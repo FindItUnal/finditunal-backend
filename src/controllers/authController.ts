@@ -42,24 +42,24 @@ export class AuthController {
       // Redirigir al frontend tras login
       const redirectUrl = `${APP_CONFIG.FRONTEND_URL}`;
       res.redirect(redirectUrl);
-    } catch (error) {
+    } catch (error: any) {
       // Handle specific errors and redirect to frontend with appropriate flags
-      try {
-        // Redirect banned users to the banned page
-        if (error instanceof AppError && error.statusCode === 403 && /baneado/i.test(error.message)) {
-          const frontend = APP_CONFIG.FRONTEND_URL.replace(/\/$/, '') + '/banned';
-          res.redirect(frontend);
-          return;
-        }
-        // Only redirect for known unauthorized domain errors to give user feedback
-        if (error instanceof AppError && error.statusCode === 401 && /dominio/i.test(error.message)) {
-          const frontend = APP_CONFIG.FRONTEND_URL.replace(/\/$/, '') + '/login';
-          const params = new URLSearchParams({ error: 'domain_not_allowed' });
-          res.redirect(`${frontend}?${params.toString()}`);
-          return;
-        }
-      } catch {
-        // ignore and fallthrough to default error handler
+      const errorMessage = error?.message || '';
+      const errorStatusCode = error?.statusCode || 0;
+      
+      // Redirect banned users to the banned page
+      if (errorStatusCode === 403 && /baneado/i.test(errorMessage)) {
+        const frontend = APP_CONFIG.FRONTEND_URL.replace(/\/$/, '') + '/banned';
+        res.redirect(frontend);
+        return;
+      }
+      
+      // Only redirect for known unauthorized domain errors to give user feedback
+      if (errorStatusCode === 401 && /dominio/i.test(errorMessage)) {
+        const frontend = APP_CONFIG.FRONTEND_URL.replace(/\/$/, '') + '/login';
+        const params = new URLSearchParams({ error: 'domain_not_allowed' });
+        res.redirect(`${frontend}?${params.toString()}`);
+        return;
       }
 
       next(error);
