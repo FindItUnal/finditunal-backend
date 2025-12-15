@@ -28,12 +28,16 @@ interface InsertResult {
   affectedRows: number;
 }
 
+type DatabaseProvider = Pick<typeof MySQLDatabase, 'getInstance'>;
+
 class ConversationModel {
   private readonly tableName = 'conversations';
 
+  constructor(private readonly databaseProvider: DatabaseProvider = MySQLDatabase) {}
+
   async findByIdForUser(conversation_id: number, user_id: string): Promise<ConversationRecord | null> {
     try {
-      const db = await MySQLDatabase.getInstance();
+      const db = await this.databaseProvider.getInstance();
       const connection = await db.getConnection();
       try {
         const [rows] = await connection.query<RowDataPacket[]>(
@@ -58,7 +62,7 @@ class ConversationModel {
     const { report_id, owner_id, participant_id } = params;
 
     try {
-      const db = await MySQLDatabase.getInstance();
+      const db = await this.databaseProvider.getInstance();
       const connection = await db.getConnection();
       try {
         // Enforce deterministic ordering: user1 = owner, user2 = participant
@@ -97,7 +101,7 @@ class ConversationModel {
       // Manejar posible carrera por UNIQUE KEY
       if (error && error.code === 'ER_DUP_ENTRY') {
         try {
-          const db = await MySQLDatabase.getInstance();
+          const db = await this.databaseProvider.getInstance();
           const connection = await db.getConnection();
           try {
             const [rows] = await connection.query<RowDataPacket[]>(
@@ -122,7 +126,7 @@ class ConversationModel {
 
   async existsByReportAndUsers(params: { report_id: number; owner_id: string; participant_id: string }): Promise<boolean> {
     try {
-      const db = await MySQLDatabase.getInstance();
+      const db = await this.databaseProvider.getInstance();
       const connection = await db.getConnection();
       try {
         const [rows] = await connection.query<RowDataPacket[]>(
@@ -141,7 +145,7 @@ class ConversationModel {
 
   async getConversationsByUser(user_id: string): Promise<ConversationSummary[]> {
     try {
-      const db = await MySQLDatabase.getInstance();
+      const db = await this.databaseProvider.getInstance();
       const connection = await db.getConnection();
       try {
         const [rows] = await connection.query<RowDataPacket[]>(
@@ -210,7 +214,7 @@ class ConversationModel {
 
   async touchConversation(conversation_id: number): Promise<void> {
     try {
-      const db = await MySQLDatabase.getInstance();
+      const db = await this.databaseProvider.getInstance();
       const connection = await db.getConnection();
       try {
         await connection.query(
@@ -228,7 +232,7 @@ class ConversationModel {
 
   async deleteConversation(conversation_id: number): Promise<void> {
     try {
-      const db = await MySQLDatabase.getInstance();
+      const db = await this.databaseProvider.getInstance();
       const connection = await db.getConnection();
       try {
         await connection.query(`DELETE FROM ${this.tableName} WHERE conversation_id = ?`, [conversation_id]);

@@ -26,8 +26,9 @@ export class ReportService {
   constructor(
     private reportModel: ReportModel,
     private imageModel: ImageModel,
+    activityLogService: ActivityLogService = new ActivityLogService(new ActivityLogModel()),
   ) {
-    this.activityLog = new ActivityLogService(new ActivityLogModel());
+    this.activityLog = activityLogService;
   }
 
   // Crear un nuevo reporte

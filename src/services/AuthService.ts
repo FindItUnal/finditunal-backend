@@ -24,8 +24,11 @@ export interface UserInfo {
 export class AuthService {
   private activityLog: ActivityLogService;
 
-  constructor(private userModel: UserModel) {
-    this.activityLog = new ActivityLogService(new ActivityLogModel());
+  constructor(
+    private userModel: UserModel,
+    activityLogService: ActivityLogService = new ActivityLogService(new ActivityLogModel()),
+  ) {
+    this.activityLog = activityLogService;
   }
 
   // Construir URL de autorización de Google

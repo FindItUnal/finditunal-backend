@@ -7,10 +7,15 @@ import ImageModel from '../models/ImageModel';
 import upload from '../middlewares/multerMiddleware';
 import { reportSchema } from '../schemas/reportSchemas';
 import { validate } from '../middlewares/validationMiddleware';
+import { ActivityLogService } from '../services/ActivityLogService';
 
-export const createReportRouter = (reportModel: ReportModel, imageModel: ImageModel): Router => {
+export const createReportRouter = (
+  reportModel: ReportModel,
+  imageModel: ImageModel,
+  activityLogService?: ActivityLogService,
+): Router => {
   const reportRouter = Router();
-  const reportService = new ReportService(reportModel, imageModel);
+  const reportService = new ReportService(reportModel, imageModel, activityLogService);
   const reportController = new ReportController(reportService);
 
   /**

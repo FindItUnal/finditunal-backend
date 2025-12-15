@@ -11,18 +11,20 @@ import MessageModel from './models/MessageModel';
 import ActivityLogModel from './models/ActivityLogModel';
 import NotificationModel from './models/NotificationModel';
 
-createApp({
-  models: {
-    userModel: UserModel,
-    reportModel: ReportModel,
-    categoryModel: CategoryModel,
-    locationModel: LocationModel,
-    objectModel: ObjectModel,
-    imageModel: ImageModel,
-    complaintModel: ComplaintModel,
-    conversationModel: ConversationModel,
-    messageModel: MessageModel,
-    activityLogModel: ActivityLogModel,
-    notificationModel: NotificationModel,
-  },
+const models = {
+  userModel: new UserModel(),
+  reportModel: new ReportModel(),
+  categoryModel: new CategoryModel(),
+  locationModel: new LocationModel(),
+  objectModel: new ObjectModel(),
+  imageModel: new ImageModel(),
+  complaintModel: new ComplaintModel(),
+  conversationModel: new ConversationModel(),
+  messageModel: new MessageModel(),
+  activityLogModel: new ActivityLogModel(),
+  notificationModel: new NotificationModel(),
+};
+
+void createApp({
+  models,
 });

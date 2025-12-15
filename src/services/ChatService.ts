@@ -14,15 +14,13 @@ export interface SendMessageResult {
 
 export class ChatService {
   private static io: SocketIOServer | null = null;
-  private notificationService: NotificationService;
 
   constructor(
     private conversationModel: ConversationModel,
     private messageModel: MessageModel,
     private reportModel: ReportModel,
-  ) {
-    this.notificationService = new NotificationService(new NotificationModel());
-  }
+    private notificationService: NotificationService = new NotificationService(new NotificationModel()),
+  ) {}
 
   static setSocketServer(io: SocketIOServer): void {
     ChatService.io = io;

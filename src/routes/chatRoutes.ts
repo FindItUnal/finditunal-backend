@@ -1,21 +1,13 @@
 import { Router } from 'express';
 import { authenticate } from '../middlewares/authMiddleware';
 import { validate } from '../middlewares/validationMiddleware';
-import ConversationModel from '../models/ConversationModel';
-import MessageModel from '../models/MessageModel';
-import ReportModel from '../models/ReportModel';
 import { ChatService } from '../services/ChatService';
 import { ChatController } from '../controllers/chatController';
 import { createMessageSchema } from '../schemas/chatSchemas';
 
-export const createChatRouter = (
-  conversationModel: ConversationModel,
-  messageModel: MessageModel,
-  reportModel: ReportModel,
-): Router => {
+export const createChatRouter = (chatService: ChatService): Router => {
   const chatRouter = Router();
 
-  const chatService = new ChatService(conversationModel, messageModel, reportModel);
   const chatController = new ChatController(chatService);
 
   /**

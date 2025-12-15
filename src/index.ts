@@ -24,6 +24,7 @@ import { UPLOADS_BASE_PATH } from './middlewares/multerMiddleware';
 import { APP_CONFIG, JWT_CONFIG } from './config';
 import { ChatService } from './services/ChatService';
 import { NotificationService } from './services/NotificationService';
+import { ActivityLogService } from './services/ActivityLogService';
 // import 'dotenv/config'
 
 interface SocketUserPayload {
@@ -35,7 +36,7 @@ export const createApp = async ({
   models,
 }: {
   models: Models;
-}): Promise<{ app: express.Application; io: SocketIOServer }> => {
+}): Promise<{ app: express.Application; io: SocketIOServer; httpServer: http.Server }> => {
   try {
     await MySQLDatabase.getInstance();
 
@@ -138,40 +139,44 @@ export const createApp = async ({
       }
     });
 
-    app.use('/auth', createAuthRouter(new models.userModel()));
-
-    app.use('/user', createReportRouter(new models.reportModel(), new models.imageModel()));
-    app.use(
-      '/user',
-      createComplaintRouter(new models.complaintModel(), new models.reportModel(), new models.imageModel()),
+    const notificationService = new NotificationService(models.notificationModel);
+    const activityLogService = new ActivityLogService(models.activityLogModel);
+    const chatService = new ChatService(
+      models.conversationModel,
+      models.messageModel,
+      models.reportModel,
+      notificationService,
     );
 
-    app.use('/user', createUserRouter(new models.userModel()));
+    app.use('/auth', createAuthRouter(models.userModel));
 
-    app.use('/user', createCategoryRouter(new models.categoryModel()));
+    app.use('/user', createReportRouter(models.reportModel, models.imageModel, activityLogService));
+    app.use('/user', createComplaintRouter(models.complaintModel, models.reportModel, models.imageModel));
 
-    app.use('/user', createLocationRouter(new models.locationModel()));
+    app.use('/user', createUserRouter(models.userModel));
 
-    app.use('/user', createObjectRouter(new models.objectModel()));
+    app.use('/user', createCategoryRouter(models.categoryModel));
+
+    app.use('/user', createLocationRouter(models.locationModel));
+
+    app.use('/user', createObjectRouter(models.objectModel));
 
     app.use('/user', createImageRouter());
 
     // Rutas de chat
-    app.use(
-      '/user',
-      createChatRouter(new models.conversationModel(), new models.messageModel(), new models.reportModel()),
-    );
+    app.use('/user', createChatRouter(chatService));
 
     // Activity log (admin)
-    app.use('/user', createActivityLogRouter(new models.activityLogModel()));
+    app.use('/user', createActivityLogRouter(models.activityLogModel));
 
     // Notificaciones de usuario
-    app.use('/user', createNotificationRouter(new models.notificationModel()));
+    app.use('/user', createNotificationRouter(models.notificationModel));
 
     // Middleware de manejo de errores (debe ir al final)
     app.use(errorHandler);
 
     const PORT = Number(process.env.PORT ?? 3000);
+    const shouldStartServer = process.env.NODE_ENV !== 'test';
 
     const httpServer = http.createServer(app);
 
@@ -184,12 +189,6 @@ export const createApp = async ({
 
     NotificationService.setSocketServer(io);
     ChatService.setSocketServer(io);
-
-    const chatService = new ChatService(
-      new models.conversationModel(),
-      new models.messageModel(),
-      new models.reportModel(),
-    );
 
     io.use((socket, next) => {
       try {
@@ -327,30 +326,26 @@ export const createApp = async ({
       });
     });
 
-    httpServer.listen(PORT, () => {
-      console.log(`server listening on port http://localhost:${PORT}`);
-    });
-
-    // Manejo de cierre graceful
-    process.on('SIGTERM', async () => {
-      console.log('SIGTERM recibido, cerrando servidor...');
-      httpServer.close(async () => {
-        const db = await MySQLDatabase.getInstance();
-        await db.close();
-        process.exit(0);
+    if (shouldStartServer) {
+      httpServer.listen(PORT, () => {
+        console.log(`server listening on port http://localhost:${PORT}`);
       });
-    });
 
-    process.on('SIGINT', async () => {
-      console.log('SIGINT recibido, cerrando servidor...');
-      httpServer.close(async () => {
-        const db = await MySQLDatabase.getInstance();
-        await db.close();
-        process.exit(0);
-      });
-    });
+      // Manejo de cierre graceful
+      const shutdown = async (): Promise<void> => {
+        console.log('Senal recibida, cerrando servidor...');
+        httpServer.close(async () => {
+          const db = await MySQLDatabase.getInstance();
+          await db.close();
+          process.exit(0);
+        });
+      };
 
-    return { app, io };
+      process.on('SIGTERM', shutdown);
+      process.on('SIGINT', shutdown);
+    }
+
+    return { app, io, httpServer };
   } catch (error) {
     console.error('Error al iniciar el servidor:', error);
     process.exit(1);
